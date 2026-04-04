@@ -1,0 +1,1 @@
+from app.database import Base, User, Anime, UserAnime, Review, Screenshot, Genre, Tag, anime_genres, anime_tags
