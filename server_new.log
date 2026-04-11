@@ -1,7 +1,0 @@
-INFO:     Will watch for changes in these directories: ['C:\\Users\\User\\Desktop\\animehako_full']
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [27824] using WatchFiles
-INFO:     Started server process [28056]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-WARNING:  WatchFiles detected changes in 'test_db2.py'. Reloading...
