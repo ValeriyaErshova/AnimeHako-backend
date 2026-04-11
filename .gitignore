@@ -50,3 +50,7 @@ Thumbs.db
 
 # Node (если будет фронтенд)
 node_modules/
+
+
+#попросил Тимур
+.vs
