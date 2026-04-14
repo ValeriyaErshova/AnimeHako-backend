@@ -54,3 +54,4 @@ node_modules/
 
 #попросил Тимур
 .vs
+__pycache__
