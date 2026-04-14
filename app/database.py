@@ -4,10 +4,10 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func
 from app.config import settings
 
-engine = create_engine(
-    "postgresql://postgres:123456@localhost:5432/animehako",
-    pool_pre_ping=True
-)
+from app.config import settings
+
+engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
