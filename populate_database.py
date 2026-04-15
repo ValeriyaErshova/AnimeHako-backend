@@ -2,273 +2,261 @@ import requests
 import time
 import psycopg2
 import re
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 DSN = "postgresql://postgres:123456@localhost:5432/animehako"
 JIKAN_BASE = "https://api.jikan.moe/v4"
-REQUEST_DELAY = 0.5
+REQUEST_DELAY = 1.5
 
-def fetch_json(url):
-    for attempt in range(3):
+session = requests.Session()
+retry = Retry(total=5, backoff_factor=2, status_forcelist=[500, 502, 503, 504])
+adapter = HTTPAdapter(max_retries=retry)
+session.mount('http://', adapter)
+session.mount('https://', adapter)
+
+def fetch_json(url, timeout=60):
+    for attempt in range(8):
         try:
-            response = requests.get(url, timeout=30)
+            response = session.get(url, timeout=timeout)
+            if response.status_code == 429:
+                wait_time = int(response.headers.get('Retry-After', 120))
+                print(f"  Rate limited, waiting {wait_time}s...")
+                time.sleep(wait_time)
+                continue
+            if response.status_code == 500:
+                print(f"  Server error, retrying...")
+                time.sleep(5)
+                continue
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"  Ошибка запроса (попытка {attempt + 1}): {e}")
-            if attempt < 2:
-                time.sleep(5 * (attempt + 1))
+            print(f"  Attempt {attempt + 1}/8 failed: {type(e).__name__}")
+            if attempt < 7:
+                time.sleep(min(60, 3 ** attempt))
             else:
                 return None
 
+def slugify(text):
+    if not text:
+        return None
+    return re.sub(r'[^a-zA-Z0-9_]', '', text.lower().replace(' ', '_').replace("'", ""))
+
+def clear_database(conn):
+    print("\n[0/6] Clearing database...")
+    cursor = conn.cursor()
+    cursor.execute("TRUNCATE anime_tags, anime_genres, screenshots, reviews, tags, genres, anime RESTART IDENTITY CASCADE")
+    conn.commit()
+    print("  Database cleared")
+
 def load_genres(conn):
-    print("\n[1/4] Загрузка жанров...")
+    print("\n[1/6] Loading genres...")
     data = fetch_json(f"{JIKAN_BASE}/genres/anime")
     if not data or "data" not in data:
-        print("  Не удалось загрузить жанры")
+        print("  Failed to load genres")
         return {}
-    
+
     genres = {}
     cursor = conn.cursor()
     for genre in data["data"]:
-        genre_id = genre["mal_id"]
+        gid = genre["mal_id"]
         name = genre["name"]
-        slug = name.lower().replace(" ", "_").replace("'", "")
+        slug = slugify(name)
         cursor.execute(
             "INSERT INTO genres (id, name, slug) VALUES (%s, %s, %s) "
             "ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, slug = EXCLUDED.slug",
-            (genre_id, name, slug)
+            (gid, name, slug)
         )
-        genres[genre_id] = name
-        print(f"  - {name}")
-    
+        genres[gid] = name
+
     conn.commit()
-    print(f"  Загружено {len(genres)} жанров")
+    print(f"  Loaded {len(genres)} genres")
     return genres
 
-def load_top_anime(conn, genres, limit=50):
-    print(f"\n[2/5] Загрузка топ-{limit} аниме...")
-    anime_list = []
+def load_anime(conn, genres, limit=50):
+    print(f"\n[2/6] Loading top-{limit} anime...")
+
+    all_anime = []
     page = 1
-    
-    while len(anime_list) < limit:
-        print(f"  Загрузка страницы {page}...")
-        data = fetch_json(f"{JIKAN_BASE}/top/anime?page={page}")
+
+    while len(all_anime) < limit:
+        url = f"{JIKAN_BASE}/top/anime?page={page}&limit=25"
+        print(f"  Fetching page {page}...")
+        data = fetch_json(url)
         if not data or "data" not in data:
             break
-        
+
         for anime in data["data"]:
-            if len(anime_list) >= limit:
+            if len(all_anime) >= limit:
                 break
-            anime_list.append(anime)
-        
-        if not data.get("pagination", {}).get("has_next_page"):
+            all_anime.append(anime)
+
+        pagination = data.get("pagination", {})
+        if not pagination.get("has_next_page"):
             break
         page += 1
         time.sleep(REQUEST_DELAY)
-    
+
+    print(f"  Fetched {len(all_anime)} anime entries")
+    if not all_anime:
+        return []
+
+    print("\n[3/6] Saving anime to database...")
     cursor = conn.cursor()
-    loaded_count = 0
-    
-    for anime in anime_list:
-        mal_id = anime["mal_id"]
-        title = anime.get("title", "Unknown")
-        title_en = anime.get("title_english")
-        title_jp = anime.get("title_japanese")
-        poster = anime.get("images", {}).get("jpg", {}).get("image_url")
-        cover = anime.get("images", {}).get("jpg", {}).get("large_image_url")
-        description = anime.get("synopsis")
-        rating = anime.get("score")
-        year = anime.get("year")
-        
-        season = None
-        status_db = None
-        if anime.get("season"):
-            season = anime["season"]
-        if anime.get("status"):
+    saved_ids = []
+
+    for i, anime in enumerate(all_anime):
+        try:
+            mal_id = anime["mal_id"]
+            title = anime.get("title", "Unknown")
+            title_en = anime.get("title_english")
+            title_jp = anime.get("title_japanese")
+            poster = anime.get("images", {}).get("jpg", {}).get("image_url")
+            cover = anime.get("images", {}).get("jpg", {}).get("large_image_url")
+            description = anime.get("synopsis")
+            rating = anime.get("score")
+            year = anime.get("year")
+
+            season = anime.get("season")
             status_map = {
                 "Currently Airing": "airing",
                 "Finished Airing": "finished",
-                "Not Yet Aired": "upcoming"
+                "Not Yet Aired": "upcoming",
+                "Hiatus": "hiatus"
             }
-            status_db = status_map.get(anime["status"])
-        
-        episodes = anime.get("episodes") or 0
-        duration = anime.get("duration", "")
-        if duration:
-            match = re.search(r'(\d+)', duration)
-            duration = int(match.group(1)) if match else None
-        
-        studio = None
-        studios = anime.get("studios", [])
-        if studios:
-            studio = studios[0].get("name")
-        
-        cursor.execute(
-            "INSERT INTO anime (id, title, title_en, title_jp, poster, cover, description, "
-            "rating, year, season, status, episodes, duration, studio, external_id) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            "ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title",
-            (mal_id, title, title_en, title_jp, poster, cover, description,
-             rating, year, season, status_db, episodes, duration, studio, str(mal_id))
-        )
-        
-        for genre in anime.get("genres", []):
-            genre_id = genre["mal_id"]
-            if genre_id in genres:
-                cursor.execute(
-                    "INSERT INTO anime_genres (anime_id, genre_id) VALUES (%s, %s) "
-                    "ON CONFLICT (anime_id, genre_id) DO NOTHING",
-                    (mal_id, genre_id)
-                )
-        
-        loaded_count += 1
-        print(f"  [{loaded_count}/{limit}] {title}")
-        time.sleep(REQUEST_DELAY)
-    
-    conn.commit()
-    print(f"  Загружено {loaded_count} аниме")
-    return [a["mal_id"] for a in anime_list]
+            status_db = status_map.get(anime.get("status"))
 
-def load_tags(conn, anime_ids):
-    print(f"\n[3/5] Загрузка тегов...")
+            episodes = anime.get("episodes") or 0
+            duration = anime.get("duration", "")
+            if duration:
+                match = re.search(r'(\d+)', duration)
+                duration = int(match.group(1)) if match else None
+
+            studio = None
+            studios = anime.get("studios", [])
+            if studios:
+                studio = studios[0].get("name")
+
+            cursor.execute("""
+                INSERT INTO anime (title, title_en, title_jp, poster, cover, description,
+                rating, year, season, status, episodes, duration, studio, external_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+            """, (title, title_en, title_jp, poster, cover, description,
+                  rating, year, season, status_db, episodes, duration, studio, str(mal_id)))
+            result = cursor.fetchone()
+            db_id = result[0] if result else mal_id
+            saved_ids.append((db_id, mal_id))
+
+            for genre in anime.get("genres", []):
+                gid = genre["mal_id"]
+                if gid in genres:
+                    cursor.execute("""
+                        INSERT INTO anime_genres (anime_id, genre_id)
+                        VALUES (%s, %s) ON CONFLICT DO NOTHING
+                    """, (db_id, gid))
+
+            print(f"  [{i+1}/{len(all_anime)}] {title[:50]}...")
+            time.sleep(REQUEST_DELAY)
+
+        except Exception as e:
+            print(f"  Error saving anime '{title}': {e}")
+            continue
+
+    conn.commit()
+    print(f"  Saved {len(saved_ids)} anime")
+    return saved_ids
+
+def load_tags_and_reviews(conn, anime_ids):
+    print(f"\n[4/6] Loading tags...")
     cursor = conn.cursor()
-    tags = {}
-    tags_loaded = 0
-    
-    for i, mal_id in enumerate(anime_ids):
-        print(f"  Загрузка тегов для anime #{mal_id} ({i+1}/{len(anime_ids)})...")
+    tags_cache = {}
+    tags_added = 0
+
+    for db_id, mal_id in anime_ids[:30]:
+        print(f"  Loading anime #{mal_id}...")
         data = fetch_json(f"{JIKAN_BASE}/anime/{mal_id}")
         if not data or "data" not in data:
+            time.sleep(REQUEST_DELAY)
             continue
-        
+
         anime_data = data["data"]
+
         for theme in anime_data.get("themes", []):
-            theme_name = theme.get("name")
-            if not theme_name:
+            name = theme.get("name")
+            if not name:
                 continue
-            theme_slug = theme_name.lower().replace(" ", "_").replace("'", "")
-            
-            if theme_slug not in tags:
-                cursor.execute(
-                    "INSERT INTO tags (name, slug) VALUES (%s, %s) "
-                    "ON CONFLICT (name) DO UPDATE SET slug = EXCLUDED.slug "
-                    "RETURNING id",
-                    (theme_name, theme_slug)
-                )
+            slug = slugify(name)
+
+            if slug not in tags_cache:
+                cursor.execute("""
+                    INSERT INTO tags (name, slug) VALUES (%s, %s)
+                    ON CONFLICT (name) DO UPDATE SET slug = EXCLUDED.slug
+                    RETURNING id
+                """, (name, slug))
                 result = cursor.fetchone()
-                tags[theme_slug] = result[0] if result else None
-            
-            tag_id = tags.get(theme_slug)
+                tags_cache[slug] = result[0] if result else None
+
+            tag_id = tags_cache.get(slug)
             if tag_id:
-                cursor.execute(
-                    "INSERT INTO anime_tags (anime_id, tag_id) VALUES (%s, %s) "
-                    "ON CONFLICT (anime_id, tag_id) DO NOTHING",
-                    (mal_id, tag_id)
-                )
-                tags_loaded += 1
-        
-        time.sleep(REQUEST_DELAY)
-    
-    conn.commit()
-    print(f"  Загружено {len(tags)} тегов, {tags_loaded} связей")
-    return tags
+                cursor.execute("""
+                    INSERT INTO anime_tags (anime_id, tag_id) VALUES (%s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (db_id, tag_id))
+                tags_added += 1
 
-def load_reviews(conn, anime_ids):
-    print(f"\n[4/5] Загрузка рецензий...")
-    cursor = conn.cursor()
-    reviews_loaded = 0
-    
-    for i, mal_id in enumerate(anime_ids[:20]):
-        print(f"  Загрузка рецензий для anime #{mal_id} ({i+1}/20)...")
-        data = fetch_json(f"{JIKAN_BASE}/anime/{mal_id}/reviews")
-        if not data or "data" not in data:
-            continue
-        
-        for review in data["data"][:3]:
-            author = review.get("user", {})
-            author_name = author.get("username", "Anonymous")
-            review_id = review["mal_id"]
-            review_title = review.get("title", "")[:255]
-            content = review.get("content", "")
-            score = review.get("score")
-            
-            cursor.execute(
-                "INSERT INTO reviews (id, anime_id, author_name, title, content, score, external_id) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-                "ON CONFLICT (id) DO UPDATE SET author_name = EXCLUDED.author_name",
-                (review_id, mal_id, author_name, review_title, content, score, str(review_id))
-            )
-            reviews_loaded += 1
-        
-        time.sleep(REQUEST_DELAY)
-    
-    conn.commit()
-    print(f"  Загружено {reviews_loaded} рецензий")
+        for review in anime_data.get("reviews", [])[:2]:
+            try:
+                user = review.get("user", {})
+                author = user.get("username", "Anonymous")
+                cursor.execute("""
+                    INSERT INTO reviews (anime_id, author_name, title, content, score, external_id)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING
+                """, (db_id, author[:255], review.get("title", "")[:255],
+                      review.get("content", ""), review.get("score"), str(review.get("mal_id", ""))))
+            except:
+                pass
 
-def load_screenshots(conn, anime_ids):
-    print(f"\n[5/5] Загрузка скриншотов...")
-    cursor = conn.cursor()
-    screenshots_loaded = 0
-    
-    for i, mal_id in enumerate(anime_ids[:20]):
-        print(f"  Загрузка скриншотов для anime #{mal_id} ({i+1}/20)...")
-        data = fetch_json(f"{JIKAN_BASE}/anime/{mal_id}/pictures")
-        if not data or "data" not in data:
-            continue
-        
-        for pic in data["data"][:5]:
-            pic_url = pic.get("jpg", {}).get("image_url")
-            if pic_url:
-                cursor.execute(
-                    "INSERT INTO screenshots (anime_id, url) VALUES (%s, %s)",
-                    (mal_id, pic_url)
-                )
-                screenshots_loaded += 1
-        
-        time.sleep(REQUEST_DELAY)
-    
-    conn.commit()
-    print(f"  Загружено {screenshots_loaded} скриншотов")
+        for pic in anime_data.get("pictures", [])[:4]:
+            url = pic.get("jpg", {}).get("image_url")
+            if url:
+                cursor.execute("""
+                    INSERT INTO screenshots (anime_id, url) VALUES (%s, %s)
+                """, (db_id, url))
 
-def clear_database(conn):
-    print("\nОчистка базы данных...")
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM anime_tags")
-    cursor.execute("DELETE FROM anime_genres")
-    cursor.execute("DELETE FROM screenshots")
-    cursor.execute("DELETE FROM reviews")
-    cursor.execute("DELETE FROM anime")
-    cursor.execute("DELETE FROM tags")
-    cursor.execute("ALTER SEQUENCE anime_id_seq RESTART WITH 1")
-    conn.commit()
-    print("База данных очищена")
+        conn.commit()
+        time.sleep(REQUEST_DELAY)
+
+    print(f"  Loaded {len(tags_cache)} tags, {tags_added} relations")
 
 def main():
     print("=" * 60)
-    print("ЗАПОЛНЕНИЕ БАЗЫ ДАННЫХ ANIMEHAKO ЧЕРЕЗ JIKAN API")
+    print("ANIMEHAKO DATABASE POPULATION VIA JIKAN API")
     print("=" * 60)
-    
+
     try:
         conn = psycopg2.connect(DSN)
-        print(f"\nПодключено к БД: animehako")
+        print(f"\nConnected to: animehako")
     except Exception as e:
-        print(f"Ошибка подключения к БД: {e}")
+        print(f"DB connection error: {e}")
         return
-    
+
     try:
         clear_database(conn)
         genres = load_genres(conn)
-        anime_ids = load_top_anime(conn, genres, limit=50)
-        load_tags(conn, anime_ids)
-        load_reviews(conn, anime_ids)
-        load_screenshots(conn, anime_ids)
-        
+        anime_ids = load_anime(conn, genres, limit=50)
+        load_tags_and_reviews(conn, anime_ids)
+
         print("\n" + "=" * 60)
-        print("ЗАПОЛНЕНИЕ ЗАВЕРШЕНО УСПЕШНО!")
+        print("POPULATION COMPLETE!")
         print("=" * 60)
+    except Exception as e:
+        print(f"\nError: {e}")
+        conn.rollback()
     finally:
         conn.close()
-        print("\nСоединение с БД закрыто")
+        print("\nDB connection closed")
 
 if __name__ == "__main__":
     main()
