@@ -138,33 +138,56 @@ def get_user_anime(status: Optional[str] = Query(None, pattern="^(watching|compl
     if status:
         query = query.filter(UserAnime.status == status)
     
+    user_anime_list = query.all()
     result = []
-    for ua in query.all():
+    for ua in user_anime_list:
         anime = db.query(Anime).filter(Anime.id == ua.anime_id).first()
-        result.append(UserAnimeResponse(
-            anime_id=ua.anime_id, status=ua.status, score=ua.score,
-            episodes_watched=ua.episodes_watched or 0, is_favorite=ua.is_favorite or False,
-            anime=AnimeListItem(id=anime.id, title=anime.title, title_en=anime.title_en,
-                  poster=anime.poster, rating=anime.rating, year=anime.year,
-                  episodes=anime.episodes, genres=[g.name for g in anime.genres]) if anime else None
-        ))
+        if anime:
+            result.append(UserAnimeResponse(
+                anime_id=ua.anime_id, status=ua.status, score=ua.score,
+                episodes_watched=ua.episodes_watched or 0, is_favorite=ua.is_favorite or False,
+                anime=AnimeListItem(id=anime.id, title=anime.title, title_en=anime.title_en,
+                      poster=anime.poster, rating=anime.rating, year=anime.year,
+                      episodes=anime.episodes, genres=[g.name for g in anime.genres])
+            ))
     return result
 
 @router.post("/api/v1/user/anime", response_model=UserAnimeResponse)
 def add_to_list(data: UserAnimeCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if not db.query(Anime).filter(Anime.id == data.anime_id).first():
+    anime = db.query(Anime).filter(Anime.id == data.anime_id).first()
+    if not anime:
         raise HTTPException(404, "Anime not found")
-    if db.query(UserAnime).filter(UserAnime.user_id == current_user.id, UserAnime.anime_id == data.anime_id).first():
+    
+    existing = db.query(UserAnime).filter(
+        UserAnime.user_id == current_user.id, 
+        UserAnime.anime_id == data.anime_id
+    ).first()
+    if existing:
         raise HTTPException(400, "Anime already in your list")
     
-    user_anime = UserAnime(user_id=current_user.id, anime_id=data.anime_id, status=data.status,
-                           score=data.score, episodes_watched=data.episodes_watched or 0)
+    user_anime = UserAnime(
+        user_id=current_user.id, 
+        anime_id=data.anime_id, 
+        status=data.status,
+        score=data.score, 
+        episodes_watched=data.episodes_watched or 0
+    )
     db.add(user_anime)
     db.commit()
     db.refresh(user_anime)
-    return UserAnimeResponse(anime_id=user_anime.anime_id, status=user_anime.status,
-        score=user_anime.score, episodes_watched=user_anime.episodes_watched,
-        is_favorite=user_anime.is_favorite or False)
+    
+    return UserAnimeResponse(
+        anime_id=user_anime.anime_id, 
+        status=user_anime.status,
+        score=user_anime.score, 
+        episodes_watched=user_anime.episodes_watched,
+        is_favorite=user_anime.is_favorite or False,
+        anime=AnimeListItem(
+            id=anime.id, title=anime.title, title_en=anime.title_en,
+            poster=anime.poster, rating=anime.rating, year=anime.year,
+            episodes=anime.episodes, genres=[g.name for g in anime.genres]
+        )
+    )
 
 @router.patch("/api/v1/user/anime/{anime_id}")
 def update_list_entry(anime_id: int, data: UserAnimeUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
