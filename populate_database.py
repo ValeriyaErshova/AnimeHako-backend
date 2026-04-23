@@ -245,7 +245,7 @@ def main():
     try:
         clear_database(conn)
         genres = load_genres(conn)
-        anime_ids = load_anime(conn, genres, limit=50)
+        anime_ids = load_anime(conn, genres, limit=100)
         load_tags_and_reviews(conn, anime_ids)
 
         print("\n" + "=" * 60)
