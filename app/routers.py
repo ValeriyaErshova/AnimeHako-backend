@@ -132,11 +132,14 @@ def update_profile(profile_data: ProfileUpdate, current_user: User = Depends(get
     return current_user
 
 @router.get("/api/v1/user/anime", response_model=List[UserAnimeResponse])
-def get_user_anime(status: Optional[str] = Query(None, pattern="^(watching|completed|dropped|planned)$"), 
+def get_user_anime(status: Optional[str] = Query(None, pattern="^(watching|completed|dropped|planned)$"),
+                   favorites: Optional[bool] = Query(None),
                    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     query = db.query(UserAnime).filter(UserAnime.user_id == current_user.id)
     if status:
         query = query.filter(UserAnime.status == status)
+    if favorites is not None:
+        query = query.filter(UserAnime.is_favorite == favorites)
     
     user_anime_list = query.all()
     result = []
@@ -194,8 +197,10 @@ def update_list_entry(anime_id: int, data: UserAnimeUpdate, current_user: User =
     user_anime = db.query(UserAnime).filter(UserAnime.user_id == current_user.id, UserAnime.anime_id == anime_id).first()
     if not user_anime:
         raise HTTPException(404, "Anime not found in your list")
-    if data.status is not None:
+    if data.status is not None and data.status != '':
         user_anime.status = data.status
+    elif data.status is None or data.status == '':
+        user_anime.status = None
     if data.score is not None:
         user_anime.score = data.score
     if data.episodes_watched is not None:
