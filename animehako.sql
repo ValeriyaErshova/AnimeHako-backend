@@ -2,10 +2,12 @@
 -- PostgreSQL database dump
 --
 
+\restrict 2UfP8T6RHjGe5A5WdlXMOr6uB1moeT9ovdj5a25ewaF8RTqyhmxhmX2VIVtaKau
+
 -- Dumped from database version 18.2
 -- Dumped by pg_dump version 18.2
 
--- Started on 2026-04-11 20:13:40
+-- Started on 2026-04-23 17:34:04
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -30,155 +32,1226 @@ CREATE SCHEMA public;
 ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- TOC entry 4902 (class 0 OID 0)
+-- TOC entry 5022 (class 0 OID 0)
 -- Dependencies: 4
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
 
 COMMENT ON SCHEMA public IS 'standard public schema';
 
---
--- TOC entry 1 (class 1255 OID 16384)
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
---
 
-CREATE TABLE public.users (
-    id SERIAL PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    avatar VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+SET default_tablespace = '';
 
+SET default_table_access_method = heap;
 
 --
--- TOC entry 2 (class 1255 OID 16385)
+-- TOC entry 219 (class 1259 OID 18990)
 -- Name: anime; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.anime (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    title_en VARCHAR(255),
-    title_jp VARCHAR(255),
-    poster VARCHAR(500),
-    cover VARCHAR(500),
-    description TEXT,
-    rating DECIMAL(3,1),
-    year INTEGER,
-    season VARCHAR(20),
-    status VARCHAR(20),
-    episodes INTEGER,
-    duration INTEGER,
-    studio VARCHAR(255),
-    external_id VARCHAR(100) UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_anime_rating ON public.anime (rating);
-CREATE INDEX idx_anime_year ON public.anime (year);
-
-
---
--- TOC entry 3 (class 1255 OID 16386)
--- Name: user_anime; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.user_anime (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
-    anime_id INTEGER REFERENCES public.anime(id) ON DELETE CASCADE,
-    status VARCHAR(20),
-    score INTEGER,
-    episodes_watched INTEGER DEFAULT 0,
-    is_favorite BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (user_id, anime_id)
-);
-
-CREATE INDEX idx_user_anime_user_id ON public.user_anime (user_id);
-CREATE INDEX idx_user_anime_anime_id ON public.user_anime (anime_id);
-CREATE INDEX idx_user_anime_status ON public.user_anime (status);
-
-
---
--- TOC entry 4 (class 1255 OID 16387)
--- Name: reviews; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.reviews (
-    id SERIAL PRIMARY KEY,
-    anime_id INTEGER REFERENCES public.anime(id) ON DELETE CASCADE,
-    author_name VARCHAR(255) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    score INTEGER,
-    external_id VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id integer NOT NULL,
+    title character varying(255) NOT NULL,
+    title_en character varying(255),
+    title_jp character varying(255),
+    poster character varying(500),
+    cover character varying(500),
+    description text,
+    rating numeric(3,1),
+    year integer,
+    season character varying(20),
+    status character varying(20),
+    episodes integer,
+    duration integer,
+    studio character varying(255),
+    external_id character varying(100),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
---
--- TOC entry 5 (class 1255 OID 16388)
--- Name: screenshots; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.screenshots (
-    id SERIAL PRIMARY KEY,
-    anime_id INTEGER REFERENCES public.anime(id) ON DELETE CASCADE,
-    url VARCHAR(500) NOT NULL
-);
-
+ALTER TABLE public.anime OWNER TO postgres;
 
 --
--- TOC entry 6 (class 1255 OID 16389)
--- Name: genres; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.genres (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL,
-    slug VARCHAR(100) UNIQUE NOT NULL
-);
-
-
---
--- TOC entry 7 (class 1255 OID 16390)
--- Name: tags; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.tags (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL,
-    slug VARCHAR(100) UNIQUE NOT NULL
-);
-
-
---
--- TOC entry 8 (class 1255 OID 16391)
+-- TOC entry 220 (class 1259 OID 18998)
 -- Name: anime_genres; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.anime_genres (
-    anime_id INTEGER REFERENCES public.anime(id) ON DELETE CASCADE,
-    genre_id INTEGER REFERENCES public.genres(id) ON DELETE CASCADE,
-    PRIMARY KEY (anime_id, genre_id)
+    anime_id integer NOT NULL,
+    genre_id integer NOT NULL
 );
 
 
+ALTER TABLE public.anime_genres OWNER TO postgres;
+
 --
--- TOC entry 9 (class 1255 OID 16392)
+-- TOC entry 221 (class 1259 OID 19003)
+-- Name: anime_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.anime_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.anime_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5023 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: anime_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.anime_id_seq OWNED BY public.anime.id;
+
+
+--
+-- TOC entry 222 (class 1259 OID 19004)
 -- Name: anime_tags; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.anime_tags (
-    anime_id INTEGER REFERENCES public.anime(id) ON DELETE CASCADE,
-    tag_id INTEGER REFERENCES public.tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (anime_id, tag_id)
+    anime_id integer NOT NULL,
+    tag_id integer NOT NULL
 );
+
+
+ALTER TABLE public.anime_tags OWNER TO postgres;
+
+--
+-- TOC entry 223 (class 1259 OID 19009)
+-- Name: genres; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.genres (
+    id integer NOT NULL,
+    name character varying(100) NOT NULL,
+    slug character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.genres OWNER TO postgres;
+
+--
+-- TOC entry 224 (class 1259 OID 19015)
+-- Name: genres_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.genres_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.genres_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5024 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: genres_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.genres_id_seq OWNED BY public.genres.id;
+
+
+--
+-- TOC entry 225 (class 1259 OID 19016)
+-- Name: reviews; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.reviews (
+    id integer NOT NULL,
+    anime_id integer,
+    author_name character varying(255) NOT NULL,
+    title character varying(255) NOT NULL,
+    content text NOT NULL,
+    score integer,
+    external_id character varying(100),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.reviews OWNER TO postgres;
+
+--
+-- TOC entry 226 (class 1259 OID 19026)
+-- Name: reviews_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.reviews_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.reviews_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5025 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: reviews_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.reviews_id_seq OWNED BY public.reviews.id;
+
+
+--
+-- TOC entry 227 (class 1259 OID 19027)
+-- Name: screenshots; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.screenshots (
+    id integer NOT NULL,
+    anime_id integer,
+    url character varying(500) NOT NULL
+);
+
+
+ALTER TABLE public.screenshots OWNER TO postgres;
+
+--
+-- TOC entry 228 (class 1259 OID 19034)
+-- Name: screenshots_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.screenshots_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.screenshots_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5026 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: screenshots_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.screenshots_id_seq OWNED BY public.screenshots.id;
+
+
+--
+-- TOC entry 229 (class 1259 OID 19035)
+-- Name: tags; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.tags (
+    id integer NOT NULL,
+    name character varying(100) NOT NULL,
+    slug character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.tags OWNER TO postgres;
+
+--
+-- TOC entry 230 (class 1259 OID 19041)
+-- Name: tags_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.tags_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.tags_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5027 (class 0 OID 0)
+-- Dependencies: 230
+-- Name: tags_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
+
+
+--
+-- TOC entry 231 (class 1259 OID 19042)
+-- Name: user_anime; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.user_anime (
+    id integer NOT NULL,
+    user_id integer,
+    anime_id integer,
+    status character varying(20),
+    score integer,
+    episodes_watched integer DEFAULT 0,
+    is_favorite boolean DEFAULT false,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.user_anime OWNER TO postgres;
+
+--
+-- TOC entry 232 (class 1259 OID 19050)
+-- Name: user_anime_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.user_anime_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.user_anime_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5028 (class 0 OID 0)
+-- Dependencies: 232
+-- Name: user_anime_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.user_anime_id_seq OWNED BY public.user_anime.id;
+
+
+--
+-- TOC entry 233 (class 1259 OID 19051)
+-- Name: users; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    email character varying(255) NOT NULL,
+    username character varying(50) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    avatar character varying(500),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.users OWNER TO postgres;
+
+--
+-- TOC entry 234 (class 1259 OID 19061)
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 5029 (class 0 OID 0)
+-- Dependencies: 234
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- TOC entry 4793 (class 2604 OID 19062)
+-- Name: anime id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime ALTER COLUMN id SET DEFAULT nextval('public.anime_id_seq'::regclass);
+
+
+--
+-- TOC entry 4795 (class 2604 OID 19063)
+-- Name: genres id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.genres ALTER COLUMN id SET DEFAULT nextval('public.genres_id_seq'::regclass);
+
+
+--
+-- TOC entry 4796 (class 2604 OID 19064)
+-- Name: reviews id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews ALTER COLUMN id SET DEFAULT nextval('public.reviews_id_seq'::regclass);
+
+
+--
+-- TOC entry 4798 (class 2604 OID 19065)
+-- Name: screenshots id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.screenshots ALTER COLUMN id SET DEFAULT nextval('public.screenshots_id_seq'::regclass);
+
+
+--
+-- TOC entry 4799 (class 2604 OID 19066)
+-- Name: tags id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id_seq'::regclass);
+
+
+--
+-- TOC entry 4800 (class 2604 OID 19067)
+-- Name: user_anime id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_anime ALTER COLUMN id SET DEFAULT nextval('public.user_anime_id_seq'::regclass);
+
+
+--
+-- TOC entry 4805 (class 2604 OID 19068)
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- TOC entry 5001 (class 0 OID 18990)
+-- Dependencies: 219
+-- Data for Name: anime; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.anime (id, title, title_en, title_jp, poster, cover, description, rating, year, season, status, episodes, duration, studio, external_id, created_at) FROM stdin;
+55	ONE PIECE	One Piece	ONE PIECE	/static/screenshots/55_01.png	/static/screenshots/55_01.png	Едва выжив в бочке после прохождения через ужасный водоворот в море, беззаботный Монки Д. Луффи попадает на борт корабля, подвергшегося нападению грозных пиратов. Несмотря на то, что он выглядит наивным подростком, его нельзя недооценивать. Не имеющий себе равных в бою, Луффи сам является пиратом, который решительно преследует заветное сокровище One Piece и титул Короля пиратов, который приходит с ним.\n\nПокойный король пиратов Гол Д. Роджер перед своей смертью всколыхнул мир, раскрыв местонахождение своих сокровищ и бросив вызов всем желающим заполучить их. С тех пор бесчисленное количество могущественных пиратов бороздили опасные моря в поисках драгоценного One Piece, но никогда не возвращались. Хотя Луффи не хватает команды и надлежащего корабля, он наделен сверхчеловеческими способностями и непоколебимым духом, которые делают его не только грозным противником, но и источником вдохновения для многих.\n\nСталкиваясь с многочисленными проблемами с широкой улыбкой на лице, Луффи собирает единственных в своем роде товарищей, которые присоединятся к нему в его амбициозном начинании, вместе преодолевая опасности и чудеса в своем уникальном приключении.\n\n[Написано MAL Rewrite]	8.7	1999	fall	airing	0	24	Toei Animation	21	2026-04-23 15:14:38.877006
+56	Звёздное дитя 3 сезон	[Oshi No Ko] Season 3	【推しの子】 第3期	/static/screenshots/56_01.png	/static/screenshots/56_01.png	Удовлетворенный своим расследованием в отношении театральной труппы Лала Лай, Аквамарин «Аква» Хосино переключает свое внимание с мести на карьерный рост и становится постоянным участником развлекательного шоу «Копай глубже!» Преследуйте невозможное. Воспоминания о своей матери все еще сохраняются в его памяти, Аква разрывает контакт с Каной Аримой, в результате чего она не может наслаждаться растущей популярностью ее кумирской группы B-Komachi.\n\nТем временем, после леденящего кровь открытия во время недавних съемок музыкального клипа Би-Комачи, сестра Аквы, Руби, решает раскрыть убийства самых дорогих ей людей. С помощью еще одной души, все еще отягощенной безвременной кончиной Ай Хосино, Руби поднимается по служебной лестнице, используя любые средства, необходимые, чтобы добиться своего.\n\n[Написано MAL Rewrite]	8.7	2026	winter	finished	11	27	Doga Kobo	60058	2026-04-23 15:14:38.877006
+70	Агент времени	Link Click	时光代理人	/static/screenshots/70_01.png	/static/screenshots/70_01.png	Говорят, что картинка стоит тысячи слов. В данном случае он хранит бесконечное количество секретов. Это секреты, которые могут найти только Чэн Сяоши и Лу Гуан. В небольшом магазине под названием «Фотостудия времени» двое друзей предоставляют специальную услугу: используя свои необычайные способности, позволяющие им вводить фотографии, они прыгают в фотографии, принесенные им клиентами, чтобы исполнить их желания. Глазами фотографа они проживают события, окружающие снимок, и пытаются расшифровать, как решить запрос своего клиента.\n\nНо каждый раз, когда они прыгают в кадр, они сильно рискуют. Одно неверное движение, и они могут изменить будущее человека, сделавшего снимок... и, возможно, бесчисленное множество других событий. Поэтому, когда события, которые им приходится пережить на этих фотографиях, начинают становиться личными, потребуются все силы, чтобы отодвинуть свои чувства в сторону и сосредоточиться на выполнении задачи, за выполнение которой им заплатили.\n\n[Написано MAL Rewrite]	8.7	\N	\N	finished	11	23	LAN Studio	44074	2026-04-23 15:14:38.877006
+71	Опасность в моём сердце 2 сезон	The Dangers in My Heart Season 2	僕の心のヤバイやつ 第2期	/static/screenshots/71_01.png	/static/screenshots/71_01.png	После насыщенных событиями зимних каникул Кётаро Итикава и Анна Ямада воссоединяются, обретая более крепкую связь. Они продолжают развиваться по-своему: Ямада берется за более сложные фотосессии, а Итикава взрослеет как физически, так и эмоционально, борясь со своей привязанностью к Ямаде. Однако совместное времяпрепровождение вне школы позволяет их отношениям углубляться, и становится все труднее отрицать их зарождающиеся романтические чувства.\n\nБорясь с этими неожиданными и новыми эмоциями, Итикава и Ямада понимают, что с течением времени их отношения обязательно изменятся — и в конечном итоге им придется решить, хотят ли они остаться близкими друзьями или наконец стать парой.\n\n[Написано MAL Rewrite]	8.7	2024	winter	finished	13	23	Shin-Ei Animation	55690	2026-04-23 15:14:38.877006
+77	Стать героем Х	To Be Hero X	凸变英雄X	/static/screenshots/77_01.png	/static/screenshots/77_01.png	Это мир, где герои создаются доверием людей, а герой, получивший наибольшее доверие, известен как «X». В этом мире доверие людей можно рассчитать по данным, и эти значения будут отражены на запястье каждого. Пока будет получено достаточно очков доверия, обычные люди также смогут обладать сверхспособностями и стать супергероями, спасающими мир. Однако постоянно меняющееся значение доверия делает путь героя полным неизведанного...\n\n(Источник: Билибили, перевод)	8.7	\N	\N	finished	24	23	Pb Animation	53447	2026-04-23 15:14:38.877006
+88	Магическая битва: Смертельная миграция Часть 1	Jujutsu Kaisen: The Culling Game Part 1	呪術廻戦 「死滅回游 前編」	/static/screenshots/88_01.png	/static/screenshots/88_01.png	Кенджаку, известный как Норитоши Камо, а в последнее время как Сугуру Гето, инициировал следующий шаг в своем разрушительном тысячелетнем плане эволюции обычных людей и их окончательного уничтожения. Руководители мира дзюдзюцу восстанавливают казнь 15-летнего Юдзи Итадори, поскольку Сатору Годзё выведен из строя в результате генерального плана Кенджаку в Сибуе. Хотя Юдзи не подозревает об этом, он вместе с Чосо патрулирует заброшенные улицы Токио, истребляя всех проклятых духов на своем пути.\n\nМежду тем, гордость фанатичного и высокомерного Наои Зенин терпит удар, когда Мегуми Фусигуро избирается следующим главой клана Зенин. Чтобы выманить Мегуми и устранить его, он преследует Юдзи, но Юта Оккоцу собирается стать палачом Юдзи. «Игра отбора» Кенджаку — жестокая королевская битва, охватывающая всю Японию и заставляющая соперников по дзю-дзюцу убивать друг друга, — запущена, и молодые чародеи дзю-дзюцу присоединяются к битве, чтобы свести старые счеты, освободить Годзё и освободить мир дзю-дзюцу от угрозы, которую представляет Кенджаку.\n\n[Написано MAL Rewrite]	8.6	2026	winter	finished	12	23	MAPPA	57658	2026-04-23 15:14:38.877006
+89	Гуррен Лаганн	Gurren Lagann	天元突破グレンラガン	/static/screenshots/89_01.png	/static/screenshots/89_01.png	Саймон и Камина родились и выросли в глубокой подземной деревне, скрытой от легендарной поверхности. Камина — свободолюбивый и беззаботный человек, стремящийся сделать себе имя, а Саймон — робкий мальчик без каких-либо реальных стремлений. Однажды, раскапывая землю, Саймон натыкается на загадочный объект, который оказывается ключом зажигания к древнему артефакту войны, который дуэт называет Лаганном. Используя свое новое оружие, Саймон и Камина отбивают внезапную атаку с поверхности с помощью Йоко Литтнер, вспыльчивой рыжей девушки с огромным пистолетом, которая бродит по миру наверху.\n\nПосле битвы небо теперь открыто, что побудило Саймона и Камину отправиться в путешествие вместе с Йоко, чтобы исследовать пустоши поверхности. Вскоре они присоединяются к борьбе против «Зверолюдей», гуманоидных существ, которые терроризируют остатки человечества с помощью мощных роботов, называемых «Стрелками». Хотя они сталкиваются с некоторыми проблемами и неудачами, троица храбро сражается с этими новыми врагами вместе с другими выжившими, чтобы вернуть поверхность, медленно разгадывая тайну размером с галактику.\n\n[Написано MAL Rewrite]	8.6	2007	spring	finished	27	24	Gainax	2001	2026-04-23 15:14:38.877006
+40	Моб Психо 100 II	Mob Psycho 100 II	モブサイコ100 II	/static/screenshots/40_01.png	/static/screenshots/40_01.png	Сигэо «Моб» Кагеяма сейчас взрослеет и понимает свою роль сверхъестественного экстрасенса, способного радикально влиять на жизнь других. Он и его наставник Рейген Аратака продолжают выполнять сверхъестественные запросы клиентов, будь то изгнание злых духов или решение городских легенд, преследующих горожан.\n\nХотя рабочий процесс остался прежним, Моб больше не просто слепо следует за Рейгеном. Несмотря на весь его опыт работы в качестве невероятно сильного экстрасенса, сверхъестественные приключения Моба теперь имеют для них больший вес. Ситуация приобретает серьезный и мрачный тон, поскольку опасности, с которыми сталкиваются Моб и Рейген, стали гораздо более ощутимыми и тревожными, чем когда-либо прежде.\n\n[Написано MAL Rewrite]	8.8	2019	winter	finished	13	24	Bones	37510	2026-04-15 17:57:34.57888
+90	Твоя апрельская ложь	Your Lie in April	四月は君の嘘	/static/screenshots/90_01.png	/static/screenshots/90_01.png	Косей Арима — вундеркинд, известный как «Человек-метроном» за то, что играет на фортепиано с точностью и совершенством. Под руководством строгой матери и тщательного обучения Косей доминирует на всех соревнованиях, в которых участвует, заслужив восхищение своих коллег-музыкантов и похвалу публики. Когда его мать внезапно умирает, из-за последующей травмы он не может слышать звук фортепиано, и после этого он никогда не выходит на сцену.\n\nВ настоящее время Косей живет тихой и скромной жизнью ученика младших классов средней школы вместе со своими друзьями Цубаки Савабе и Рётой Ватари. Пытаясь пережить смерть матери, он продолжает цепляться за музыку. Его монохромная жизнь переворачивается с ног на голову в тот день, когда он встречает эксцентричную скрипачку Каори Миядзоно, которая снова возвращает его в центр внимания в качестве своего аккомпаниатора. Благодаря небольшой лжи эти два молодых музыканта сближаются, пока Каори пытается наполнить мир Косея красками.\n\n[Написано MAL Rewrite]	8.6	2014	fall	finished	22	22	A-1 Pictures	23273	2026-04-23 15:14:38.877006
+29	Истории монстров 2 сезон	Owarimonogatari Second Season	終物語	/static/screenshots/29_01.png	/static/screenshots/29_01.png	После встречи со специалистом по странностям Изуко Гаэн, третьекурсник старшей школы Коёми Арараги просыпается в странной, пустынной пустоте только для того, чтобы быть встреченным радостно знакомым лицом в тревожно незнакомом месте.  \n\nАрараги с помощью своей подруги Хитаги Сенджогахара пробирается через паутину своего прошлого и затруднения настоящего в поисках ответов. Однако судьба снова сводит его с эксцентричным студентом-переводчиком Оуги Осино, который делает неожиданное предложение, которое может раскрыть тот самый фундамент, к которому он привязан. Когда Арараги срывает слои тайны, окружающие привидение, он открывает правду, не предназначенную для раскрытия.\n\n[Написано MAL Rewrite]	8.9	\N	\N	finished	7	22	Shaft	35247	2026-04-15 17:57:34.57888
+92	Атака титанов 3 сезон	Attack on Titan Season 3	進撃の巨人 Season3	/static/screenshots/92_01.png	/static/screenshots/92_01.png	Человечество все еще находится под угрозой со стороны «Титанов», лишающих их свободы, и остается запертым внутри двух оставшихся стен. Усилия по искоренению этих монстров продолжаются; однако угрозы исходят не только от Титанов за стенами, но и от людей внутри них.\n\nПосле спасения от Колоссальных и Бронированных Титанов Эрен Йегер посвящает себя улучшению своей формы Титана. Криста Ленц изо всех сил пытается смириться с потерей своего друга, капитан Леви выбирает Эрена и его друзей, чтобы сформировать свой новый личный отряд, а командир Эрвин Смит восстанавливается после травм. Для солдат все кажется хорошо, пока правительство внезапно не требует опеки над Эреном и Кристой. Недавние успехи Разведкорпуса привлекли внимание, и знакомое лицо из прошлого Леви отправляется за разыскиваемыми солдатами. Разыскиваемый правительством Леви и его новый отряд должны уклоняться от своих противников в надежде обеспечить безопасность Эрена и Кристы.\n\nЭрен и его сослуживцы сражаются не только за свое выживание против ужасающих Титанов, но и против ужаса гораздо более коварного врага: своих собратьев-людей.\n\n[Написано MAL Rewrite]	8.6	2018	summer	finished	12	23	Wit Studio	35760	2026-04-23 15:14:38.877006
+99	Волейбол Фильм	Haikyu!! Movie: The Dumpster Battle	劇場版ハイキュー!! ゴミ捨て場の決戦	/static/screenshots/99_01.png	/static/screenshots/99_01.png	Кенма Кодзуме никогда не считал волейбол развлечением или захватывающим занятием: это просто то, в чем он хорош. Но теперь волейбольная команда средней школы Некома прошла квалификацию на весенний национальный чемпионат и готовится сразиться со своим давним соперником — Карасуно. Теперь Кенме предстоит проанализировать самую противоречивую и устойчивую команду и привести Некому к победе над ними. Более того, он сыграет против своего друга Сёё Хинаты, невысокого, но невероятно опытного центрального блокирующего Карасуно.\n\nКарасуно ни разу не удалось обыграть Некому в тренировочных матчах. Тем не менее, несмотря на свое обычное безразличие, Кенма чувствует легкое волнение от перспективы встретиться с Карасуно в официальной игре с высокими ставками без каких-либо побед. Чтобы выйти в полуфинал и в конечном итоге восстановить былую славу своей команды, Карасуно должен найти способ преодолеть блестящую стратегию Кенмы и победить Некому на их собственной территории.\n\n[Написано MAL Rewrite]	8.6	\N	\N	finished	1	1	Production I.G	52742	2026-04-23 15:14:38.877006
+22	Код Гиас: Восставший Лелуш R2	Code Geass: Lelouch of the Rebellion R2	コードギアス 反逆のルルーシュ R2	/static/screenshots/22_01.png	/static/screenshots/22_01.png	Прошел год со времени Черного восстания, неудавшегося восстания против Священной Британской Империи, возглавляемого линчевателем Зеро в маске, который сейчас пропал. Потеряв своего революционного лидера, группа сопротивления Зоны 11 — Черные Рыцари — оказывается слишком бессильной, чтобы бороться с жестокостью, нанесенной Британией по отношению к Одиннадцати, которая значительно усилилась, чтобы сокрушить любую надежду на будущее восстание. \n\nЛелуш Ламперуж, потерявший всякую память о своей двойной жизни, мирно живет вместе со своими друзьями, будучи учеником старшей школы Эшфордской академии. Его бывшая партнерша СиСи, неспособная смириться с таким поворотом событий, берет на себя задачу напомнить ему о его прошлой цели, надеясь, что вдохновитель Зеро снова восстанет, чтобы закончить то, что он начал.\n\n[Написано MAL Rewrite]	8.9	2008	spring	finished	25	24	Sunrise	2904	2026-04-15 17:57:34.57888
+23	Монолог фармацевта 2 сезон	The Apothecary Diaries Season 2	薬屋のひとりごと 第2期	/static/screenshots/23_01.png	/static/screenshots/23_01.png	Используя свой остроумие и обширные знания о лекарствах и ядах, Маомао сыграла ключевую роль в разгадке ряда загадок и заговоров, преследовавших императорский двор. Недавно примирившись с тайнами своих родителей, она возвращается, чтобы выполнять свои обычные обязанности от имени высокопоставленных супруг императора. Маомао также работает вместе с евнухом Цзиньши, чтобы улучшить состояние многих фрейлин супругов, в том числе помогает им научиться читать.\n\nОднако с прибытием торгового каравана приходит новая волна интриг. Серия странных совпадений с участием посетителей и их товаров тревожит Маомао, заставляя ее расследовать загадочные обстоятельства, стоящие за конвоем. Поскольку опасности как снаружи, так и изнутри угрожают балансу между императорскими наложницами, Маомао продолжает использовать свою хитрость и медицинский опыт, чтобы защитить женщин от вреда.\n\n[Написано MAL Rewrite]	8.9	2025	winter	finished	24	24	OLM	58514	2026-04-15 17:57:34.57888
+26	Монстр	Monster	モンスター	/static/screenshots/26_01.png	/static/screenshots/26_01.png	Доктор Кензо Тенма, элитный нейрохирург, недавно помолвленный с дочерью директора своей больницы, находится на пути к восхождению по лестнице больничной иерархии. Так продолжалось до тех пор, пока однажды ночью, казалось бы, небольшое событие не изменило жизнь доктора Тенмы навсегда. Когда он готовился сделать кому-то операцию, ему позвонил директор больницы и сказал ему сменить пациента и вместо этого провести операцию на головном мозге, спасающую жизнь известному исполнителю. Его коллеги-врачи, невеста и директор больницы аплодируют его достижениям; но из-за смены бедный рабочий-иммигрант умер, в результате чего у доктора Тенмы случился кризис совести.\n\nПоэтому, когда возникает подобная ситуация, доктор Тенма стоит на своем и решает провести операцию мальчику Йохану Либерту, а не мэру города. К сожалению, этот выбор приводит к серьезным последствиям для доктора Тенмы, одним из которых является потеря своего социального положения. Однако после загадочной смерти директора и двух других врачей положение доктора Тенмы восстанавливается. Не имея никаких доказательств, позволяющих его осудить, он освобождается и получает должность директора больницы. \n\nДевять лет спустя, когда доктор Тенма спасает жизнь преступнику, его прошлое возвращается, чтобы преследовать его — он снова сталкивается лицом к лицу с монстром, которого прооперировал. Теперь ему предстоит отправиться в погоню, чтобы возместить ущерб, нанесенный тем, кого он спас.\n\n[Написано MAL Rewrite]	8.9	2004	spring	finished	74	24	Madhouse	19	2026-04-15 17:57:34.57888
+1	Провожающая в последний путь Фрирен	Frieren: Beyond Journey's End	葬送のフリーレン	/static/screenshots/1_01.png	/static/screenshots/1_01.png	Во время своего десятилетнего стремления победить Короля Демонов члены отряда героя — сам Химмель, священник Хейтер, воин-гном Эйзен и эльфийский маг Фрирен — скрепляют узы посредством приключений и сражений, оставляя незабываемые драгоценные воспоминания для большинства из них.\n\nОднако время, которое Фрирен проводит со своими товарищами, эквивалентно лишь частичке ее жизни, длившейся более тысячи лет. Когда после победы партия распускается, Фрирен небрежно возвращается к своей «обычной» рутине сбора заклинаний по всему континенту. Из-за другого чувства времени она, похоже, не испытывает сильных чувств к переживаниям, через которые ей пришлось пройти.\n\nС годами Фрирен постепенно осознает, как на нее действительно повлияли дни, проведенные в отряде героя. Став свидетельницей смерти двух своих бывших товарищей, Фрирен начинает сожалеть, что восприняла их присутствие как должное; она клянется лучше понимать людей и создавать настоящие личные связи. Хотя история этого некогда памятного путешествия уже давно закончилась, вот-вот начнется новая история.\n\n[Написано MAL Rewrite]	9.3	2023	fall	finished	28	24	Madhouse	52991	2026-04-15 17:57:34.57888
+25	Гинтама: Фильм: Последняя глава: Будь вечно Ерозуей	Gintama: The Movie: The Final Chapter: Be Forever Yorozuya	劇場版 銀魂 完結篇 万事屋よ永遠なれ	/static/screenshots/25_01.png	/static/screenshots/25_01.png	Когда Гинтоки задерживает пирата фильма на премьере фильма, он просматривает отснятый материал камеры и оказывается перенесенным в мрачную постапокалиптическую версию Эдо, где загадочная эпидемия под названием «Белая чума» опустошила население мира. Оказывается, пират из фильма на самом деле не был пиратом — это была машина времени на базе Android, и Гинтоки перенесся на пять лет в будущее! Шинпачи и Кагура, его соратники Ёрозуя, поссорились и теперь являются закаленными в боях одиночными линчевателями, а сам он пропал без вести в течение многих лет, бесследно исчезнув после того, как нацарапал странное сообщение в своем дневнике.\n\nВыйдя в маскировку, данную ему машиной времени андроида, Гинтоки случайно воссоединяет команду Ёрозуя для расследования Белой чумы и вскоре обнаруживает, что ключ к спасению будущего лежит во тьме его собственного прошлого. Будучи преисполнен решимости противостоять могущественному врагу, он делает важное открытие: имея на своей стороне разношерстную группу друзей и союзников, ему не придется сражаться в одиночку.\n\n[Написано MAL Rewrite]	8.9	\N	\N	finished	1	1	Sunrise	15335	2026-04-15 17:57:34.57888
+39	Атака титанов: Финальный сезон	Attack on Titan: Final Season	進撃の巨人 The Final Season	/static/screenshots/39_01.png	/static/screenshots/39_01.png	Габи Браун и Фалько Грайс всю свою жизнь тренировались, чтобы унаследовать одного из семи Титанов, находящихся под контролем Марли, и помочь своей нации в искоренении элдийцев на Паради. Однако, хотя для двух кадетов все кажется хорошо, их покой внезапно нарушается прибытием Эрена Йегера и остальных членов Разведкорпуса.\n\nДостигнув, наконец, подвала семьи Йегеров и узнав о темной истории, окружающей Титанов, Разведкорпус наконец-то нашел ответ, за который так отчаянно боролись. Теперь, когда правда в их руках, группа отправляется в мир за стенами.\n\nВ Shingeki no Kyojin: The Final Season сталкиваются два совершенно разных мира, поскольку каждая из сторон преследует свои собственные цели в долгожданном завершении борьбы Паради за свободу.\n\n[Написано MAL Rewrite]	8.8	2021	winter	finished	16	23	MAPPA	40028	2026-04-15 17:57:34.57888
+27	Гинтама. Арка серебряной души - вторая часть войны	Gintama. Silver Soul Arc - Second Half War	銀魂. 銀ノ魂篇 後半戦	/static/screenshots/27_01.png	/static/screenshots/27_01.png	После временного отступления Освободительной армии Альтаны из района Кабуки состояние войны, по-видимому, улучшилось. Однако пока Онивабан, Синсэнгуми и жители района сражаются с остатками армии, величайший изобретатель Эдо Генгай Хирага похищается. Наномашинный вирус Генгаи, ответственный за отступление противника, сделав его оружие бесполезным, теперь находится под угрозой отключения.\n\nТем временем на орбите Земли на базовом корабле Армии Освобождения активируется лазер, способный уничтожить планету. Еще одна битва происходит, когда Синсуке Такасуги и остальные Кихейтай прибывают на судно, чтобы остановить стрельбу из оружия. Вынужденные вести войну на два фронта, Ёрозуя и их союзники должны победить обе стороны, чтобы спасти Эдо и остальной мир.\n\n[Написано MAL Rewrite]	8.9	2018	summer	finished	14	24	Bandai Namco Pictures	37491	2026-04-15 17:57:34.57888
+34	Сага о Винланде 2 сезон	Vinland Saga Season 2	ヴィンランド・サガ SEASON2	/static/screenshots/34_01.png	/static/screenshots/34_01.png	После смерти отца и разрушения деревни английскими налетчиками Эйнар желает мирной жизни со своей семьей на их недавно восстановленных фермах. Однако у судьбы другие планы: его деревня снова подверглась нападению. Эйнар беспомощно наблюдает, как мародерствующие датчане сжигают его земли и убивают его семью. Захватчики захватывают Эйнара и увозят его в Данию в качестве раба. \n\nЭйнар цепляется за последние слова своей матери, чтобы выжить. Его покупает Кетиль, добрый рабовладелец и землевладелец, который обещает, что Эйнар сможет вернуть себе свободу в обмен на работу в поле. Вскоре Эйнар встречает своего нового партнера по сельскому хозяйству — Торфинна, удрученного и меланхоличного раба. Пока Эйнар и Торфинн вместе стремятся к своей свободе, их преследуют как грехи прошлого, так и уловки настоящего. Тем не менее, они продолжают жить, цепляясь за проблеск надежды, искупления и мира в мире, который является ничем иным, как несправедливым и неумолимым.\n\n[Написано MAL Rewrite]	8.8	2023	winter	finished	24	25	MAPPA	49387	2026-04-15 17:57:34.57888
+33	Вайолет Эвергарден Фильм	Violet Evergarden: The Movie	劇場版 ヴァイオレット・エヴァーガーデン	/static/screenshots/33_01.png	/static/screenshots/33_01.png	Прошло несколько лет после окончания Великой войны. Поскольку радиовышка в Лейденшафтлихе продолжает строиться, телефоны вскоре станут более актуальными, что приведет к снижению спроса на «куклы с автозапоминанием». Несмотря на это, слава Вайолет Эвергарден продолжает расти благодаря ее постоянным успехам в написании писем. Однако иногда то, чего вы жаждете, не появляется.\n\nФильм Вайолет Эвергарден рассказывает о Вайолет, которая продолжает постигать концепцию эмоций и значение любви. В то же время у нее есть проблеск надежды на то, что мужчина, который когда-то сказал ей: «Я люблю тебя», может быть все еще жив даже спустя много лет, прошедших.\n\n[Написано MAL Rewrite]	8.8	\N	\N	finished	1	2	Kyoto Animation	37987	2026-04-15 17:57:34.57888
+36	Гинтама. Арка серебряной души	Gintama. Silver Soul Arc	銀魂. 銀ノ魂篇	/static/screenshots/36_01.png	/static/screenshots/36_01.png	После ожесточенной битвы на Ракуё наконец раскрывается невыразимое прошлое и истинная цель бессмертного лидера Нараку Уцуро. Развратив резервы Альтаны на нескольких планетах, Уцуро успешно спровоцировал вмешательство злейшего врага Тендосю: Армии освобождения Альтаны. Поскольку Земля является главным полем битвы в этой межпланетной войне, генеральный план Уцуро по уничтожению планеты — и его самого — почти завершен. \n\nНападение на центральный терминал О-Эдо знаменует собой начало финальной битвы за возвращение земель самураев. Поскольку Ёродзуя нигде не видно, бакуфу почти рухнуло, а сёгун пропал, люди остаются совершенно беспомощными, поскольку Освободительная армия начинает грабить Эдо во имя освобождения их от правления Тендосю. \n\nОказавшись под перекрестным огнем двух одинаково внушительных сил, смогут ли Гинтоки, Кагура, Шинпачи и бывшие ученики Сёё Ёсида забыть о своих разногласиях и объединить своих союзников, чтобы защитить то, что им дорого?\n\n[Написано MAL Rewrite]	8.8	2018	winter	finished	12	24	Bandai Namco Pictures	36838	2026-04-15 17:57:34.57888
+47	Первородный грех Такопи	Takopi's Original Sin	タコピーの原罪	/static/screenshots/47_01.png	/static/screenshots/47_01.png	Существо, похожее на кальмара, известное как гэппианец, покидает свою родную планету с желанием распространить счастье по всей вселенной. Он приземляется на Землю, но быстро оказывается в опасности пленения ее обитателями. К счастью, его находит неулыбчивая маленькая девочка по имени Шизука Кузе, которая кормит его и называет Такопи. Чувствуя себя в долгу, Такопи решает сделать все, что в его силах, чтобы вызвать улыбку на ее лице.\n\nОднако эту задачу легче сказать, чем сделать. Шизуку издеваются одноклассники, у нее нет отца, а мать никогда не бывает дома, хотя серьезность этих проблем пролетает над головой наивного Такопи. Несмотря на это, у Шизуки есть один источник счастья: ее собака Чаппи. Связь Шизуки и Чаппи только усиливает желание Такопи заставить девушку улыбнуться.\n\nХотя попытки Такопи поднять настроение Шизуке приводят к непредвиденным последствиям, он полон решимости взять все в свои руки, проверить свое понимание людей и достичь своей цели - распространения счастья.\n\n[Написано MAL Rewrite]	8.8	\N	\N	finished	6	26	Enishiya	60489	2026-04-15 17:57:34.57888
+83	Ходячий замок	Howl's Moving Castle	ハウルの動く城	/static/screenshots/83_01.png	/static/screenshots/83_01.png	Этот беспорядочный образец архитектуры, эта какофония шипящего пара и скрипа суставов, из которого клубится дым, когда он движется сам по себе... Этот замок является домом для великолепного волшебника Хаула, печально известного как своим магическим мастерством, так и тем, что он был бабником - по крайней мере, так ходят слухи в маленьком городке Софи Хэттер. Софи, обычная дочь шляпника, не ждет многого от своего будущего и довольствуется упорной работой в магазине. \n\nОднако простая жизнь Софи меняется на интересную, когда она попадает в тревожную ситуацию, и таинственный волшебник появляется, чтобы спасти ее. К сожалению, эта встреча, какой бы короткой она ни была, побуждает тщеславную и мстительную Ведьму Пустоши - в приступе ревности, вызванной прошлым раздором с Хоулом, - наложить проклятие на девушку, превратив ее в старуху.\n\nВ попытке вернуться к нормальной жизни Софи должна сопровождать Хоула и множество эксцентричных товарищей — от могущественного огненного демона до прыгающего чучела — в его живом замке в опасном приключении, когда бушующая война разрывает их королевство на части.\n\n[Написано MAL Rewrite]	8.7	\N	\N	finished	1	1	Studio Ghibli	431	2026-04-23 15:14:38.877006
+76	Девушки-пони: Серая Золушка	Umamusume: Cinderella Gray Part 2	ウマ娘 シンデレラグレイ 第2クール	/static/screenshots/76_01.png	/static/screenshots/76_01.png	С тех пор, как девушка-лошадь Огури Кэп покинула небольшой городок Касаматсу, чтобы достичь больших высот в Токио, она быстро привлекла внимание своими замечательными результатами. Ее цель стать лучшей наездницей в Японии кажется вполне достижимой, но на ее пути стоит соперник — еще один вундеркинд по бегу по имени Тамамо Кросс.\n\nОднако Тамамо — не единственная угроза для Огури: несколько гонщиков мирового класса из-за границы присоединяются к Кубку Японии, поднимая конкуренцию в знаменитой гонке на беспрецедентный уровень. При поддержке близких ей людей и страстном желании победить Огури сделает все, чтобы завоевать Кубок Японии и продолжить стремление к вершине.\n\n[Написано MAL Rewrite]	8.7	2025	fall	finished	10	23	CygamesPictures	61930	2026-04-23 15:14:38.877006
+38	Дневник разных стран	Journal with Witch	違国日記	/static/screenshots/38_01.png	/static/screenshots/38_01.png	У тридцатипятилетней писательницы Макио Кудай никогда не было хороших отношений со своей старшей сестрой Минори, которая всегда ругала ее за то, что она другая. Благодаря этому Макио не огорчается, услышав новость о том, что Минори и ее муж погибли в автокатастрофе. Но когда Макио просят опознать их тела, она сталкивается со своей 15-летней племянницей Асой Такуми, которую не видела много лет.\n\nПока Аса пытается пережить смерть своих родителей, Макио заверяет ее, что ее сложные чувства обоснованны, и предлагает подростку начать вести дневник, чтобы справиться с потерей. Узнав, что никто из родственников не хочет брать Асу, Макио решает стать ее опекуном, несмотря на отсутствие у нее опыта. В мире, полном неопределенности, писатель и подросток должны научиться жить друг с другом, пытаясь разобраться в себе.\n\n[Написано MAL Rewrite]	8.8	2026	winter	finished	13	23	Shuka	58788	2026-04-15 17:57:34.57888
+49	Ковбой Бибоп	Cowboy Bebop	カウボーイビバップ	/static/screenshots/49_01.png	/static/screenshots/49_01.png	Преступление вне времени. К 2071 году человечество распространилось по галактике, заполнив поверхность других планет поселениями, подобными земным. Эти новые общества страдают от убийств, употребления наркотиков и воровства, а за межгалактическими преступниками охотится все большее число жестоких охотников за головами.\n\nСпайк Шпигель и Джет Блэк преследуют преступников по всему космосу, чтобы зарабатывать на жизнь скромно. Несмотря на глупое и отчужденное поведение, Спайка преследует тяжесть его жестокого прошлого. Тем временем Джет справляется со своими тревожными воспоминаниями, заботясь о Спайке и Бибопе, их корабле. К дуэту присоединяются красивая мошенница Фэй Валентайн, странный ребенок Эдвард Вонг Хау Пепелу Тивруски IV и Эйн, биоинженерный вельш-корги.\n\nРазвивая связи и работая над поимкой ярких преступников, жизнь команды Бибопа нарушается угрозой из прошлого Спайка. Пока маниакальный заговор соперника продолжает раскрываться, Спайку приходится выбирать между жизнью со своей новообретенной семьей или местью за свои старые раны.\n\n[Написано MAL Rewrite]	8.8	1998	spring	finished	26	24	Sunrise	1	2026-04-15 17:57:34.57888
+75	Клинок, рассекающий демонов: Квартал красных фонарей	Demon Slayer: Kimetsu no Yaiba Entertainment District Arc	鬼滅の刃 遊郭編	/static/screenshots/75_01.png	/static/screenshots/75_01.png	Разрушительный инцидент с поездом Муген все еще тяжело давит на членов Корпуса Убийц Демонов. Несмотря на время на восстановление, жизнь должна продолжаться, поскольку злодеи никогда не спят: злобный демон терроризирует очаровательных женщин развлекательного района Ёсивара. Расследованием занимаются Звук Хашира, Тенген Узуи и три его жены. Однако, когда вскоре он теряет контакт со своими супругами, Тенген опасается худшего и заручается помощью Танджиро Камадо, Зеницу Агацумы и Иносукэ Хашибиры, чтобы проникнуть в самые известные дома района и найти развратного Демона высшего ранга.\n\n[Написано MAL Rewrite]	8.7	2022	winter	finished	11	26	ufotable	47778	2026-04-23 15:14:38.877006
+10	Письмо фаната One Peace	One Piece Fan Letter	ONE PIECE FAN LETTER	/static/screenshots/10_01.png	/static/screenshots/10_01.png	Хотя золотой век пиратства вот-вот достигнет новых высот, большинство людей не стремятся к славе найти неуловимый One Piece — сокровище, означающее нового покорителя всех морей, которое когда-то было воплощением легендарного короля пиратов Гол Д. Роджера. Однако, даже если гражданские лица в целом презирают пиратов, они тайно болеют по крайней мере за одного из них. \n\nОдна рыжеволосая девушка с архипелага Сабаоди не является исключением: она уважает Нами, гениальную женщину-штурмана команды Соломенной Шляпы Монки Д. Луффи. Решив доставить фанатское письмо своему кумиру, девочка Сабаоди готова бросить вызов силам власти, которые стремятся помешать Луффи и его друзьям отправиться в следующий пункт назначения: Новый Мир. Но чтобы добиться успеха, поклоннице Нами, возможно, придется рискнуть своей жизнью и вмешаться в планы морских пехотинцев, что может привести к разрушительным последствиям для всего мира.\n\n[Написано MAL Rewrite]	9.0	\N	\N	finished	1	24	Toei Animation	60022	2026-04-15 17:57:34.57888
+43	Первый шаг	Fighting Spirit	はじめの一歩 THE FIGHTING!	/static/screenshots/43_01.png	/static/screenshots/43_01.png	В отсутствие отца подросток Иппо Макуноучи усердно работает, чтобы помочь своей матери вести бизнес по аренде рыбацких лодок. Робкий характер Иппо, недостаток сна и запах моря делают его легкой мишенью для безжалостных хулиганов, которые ежедневно оставляют его в синяках и избивают. Мамору Такамура, многообещающий боксер, спасает Иппо от жестокого инцидента после школы и забирает его обратно в боксерский зал Камогава для выздоровления. Такамура и его коллеги-боксеры, Масару Аоки и Тацуя Кимура, ошеломлены мощными ударами Иппо – результатом того, что сильные мышцы развивались годами на службе его физически утомительному семейному бизнесу. \n\nПосле короткой тренировки под руководством Такамуры Иппо впечатляет других боксеров в тренировочном матче против вундеркинда Ичиро Мияты. У него появляется соперник в лице Мияты и тренер в лице Гэндзи Камогавы, владельца спортзала и самого бывшего боксера. Делая первые шаги в своей официальной боксерской карьере, Иппо сталкивается с рядом сложных противников, каждый из которых сильнее предыдущего. Победы, поражения и цикл самоотверженных тренировок ждут Иппо на его пути к величию. Обладая крепким телом и неудержимым боевым духом, добрый молодой человек стремится покорить мир.\n\n[Написано MAL Rewrite]	8.8	2000	fall	finished	75	23	Madhouse	263	2026-04-15 17:57:34.57888
+61	Мастер Муси: Следующая глава Часть 2	Mushi-shi: Next Passage Part 2	蟲師 続章	/static/screenshots/61_01.png	/static/screenshots/61_01.png	Призрачные первобытные существа, известные как Муси, продолжают вызывать загадочные изменения в жизни людей. Путешествующий Мусиси, Гинко, упорно пытается исправить странные и тревожные ситуации, с которыми он сталкивается. Петли времени, живые тени и телепатия относятся к числу явных последствий вмешательства Муси, но более тонкие симптомы, на то, чтобы их заметить, требуются годы, также вызывают беспокойство Гинко, когда он переходит из деревни в деревню.\n\nБлагодаря обстоятельствам Гинко стала арбитром, определяющим, какие Муси являются благословением, а какие — проклятием. Но линии, которые он пытается провести, субъективны. Некоторые из его пациентов предпочли бы использовать свои новые силы до тех пор, пока они полностью не поглотят их; другие отчаянно стремятся избавиться от недугов, которые на самом деле защищают их жизнь от опустошения. Те, кто пересекается с Муси, должны научиться принимать, казалось бы, невозможные последствия своих действий и залечивать раны, о которых они даже не подозревали. В противном случае они рискуют встретиться с судьбами, недоступными их пониманию.\n\n[Написано MAL Rewrite]	8.7	2014	fall	finished	10	23	Artland	24701	2026-04-23 15:14:38.877006
+65	Код Гиас: Восставший Лелуш	Code Geass: Lelouch of the Rebellion	コードギアス 反逆のルルーシュ	/static/screenshots/65_01.png	/static/screenshots/65_01.png	В 2010 году Священная Империя Британия утверждает себя как доминирующее военное государство, начиная с завоевания Японии. Переименованная в Зону 11 после своего быстрого поражения, Япония столкнулась с серьезным сопротивлением этим тиранам в попытке восстановить независимость.\n\nЛелуш Ламперуж, британский студент, к сожалению, оказался под перекрестным огнем между британскими и повстанческими вооруженными силами Зоны 11. Однако ему удается сбежать благодаря своевременному появлению загадочной девушки по имени СиСи, которая дарует ему Гиас, «Силу королей». Осознав огромный потенциал своей вновь обретенной «силы абсолютного повиновения», Лелуш отправляется в опасное путешествие в роли линчевателя в маске, известного как Зеро, возглавляя беспощадное нападение на Британию, чтобы отомстить раз и навсегда.\n\n[Написано MAL Rewrite]	8.7	2006	fall	finished	25	24	Sunrise	1575	2026-04-23 15:14:38.877006
+69	Сквозь эпохи: Узы Ракуго	Descending Stories: Showa Genroku Rakugo Shinju	昭和元禄落語心中～助六再び篇～	/static/screenshots/69_01.png	/static/screenshots/69_01.png	Даже достигнув высшего ранга синъучи, Ётаро изо всех сил пытается найти свою личность в мире ракуго. Находясь между учением своего учителя и уникальным стилем покойного Сукероку, его игре не хватает важного ингредиента — эго. И хотя его популярность заполонила кинотеатры, он всего лишь один из немногих; Ракуго находится под угрозой затмения.\n\nТем временем Якумо, которого многие считают последним оплотом сохранения популярности ракуго, изо всех сил пытается справиться со своим преклонным возрастом. Несмотря на то, что его выступления по-прежнему звездные, он боится, что приближается к своим пределам. Его сомнения становятся сильнее по мере того, как старый друг подкрадывается все ближе. Конацу, со своей стороны, пытается воспитать сына как мать-одиночку, чему Ётаро категорически против. Вместо этого он пытается убедить ее выйти за него замуж и, в свою очередь, воспитать ее сына как своего собственного.\n\nВ Shouwa Genroku Rakugo Shinjuu: Sukeroku Futatabi-hen завершается история Ётаро и Якумо, которым поручено восстановить почти устаревшую форму искусства, а также преодолеть их внутренние конфликты.\n\n[Написано MAL Rewrite]	8.7	2017	winter	finished	12	24	Studio Deen	33095	2026-04-23 15:14:38.877006
+72	Мастер Муси: Следующая глава Часть 1	Mushi-shi: Next Passage Part 1	蟲師 続章	/static/screenshots/72_01.png	/static/screenshots/72_01.png	Воспринимаемые людьми как странные и внушающие страх, со временем уродливые существа стали известны как Муси. Хотя они не питают злых намерений по отношению к людям, многие страдают от побочных эффектов своего существования и странной природы; эксплуатация Муси без их понимания, даже непреднамеренная, может привести к катастрофе и раздорам для всех участников. Мусиси Зоку Шоу продолжает историю Мусиси Гинко в его путешествии, чтобы помочь видимому миру сосуществовать с Муси.\n\nВо время своих путешествий Гинко обнаруживает различных одаренных людей — проклятых обстоятельствами и тех, кто поддерживает хрупкий симбиоз с Муси — неизбежно сталкивающихся с вопросом, сможет ли человечество, как талантливое, так и замученное, справиться с ответственностью невидимого. Более того, будучи Мусиси, Гинко должен узнать больше об этих странных существах и решить, имеет ли он право вмешиваться в сложные отношения между Муси и человечеством.\n\n[Написано MAL Rewrite]	8.7	2014	spring	finished	10	24	Artland	21939	2026-04-23 15:14:38.877006
+74	Бродяга Кэнсин: Воспоминания	Samurai X: Trust and Betrayal	るろうに剣心―明治剣客浪漫譚―追憶編	/static/screenshots/74_01.png	/static/screenshots/74_01.png	Когда дикость человечества превосходит его страх смерти, у тех, кто желает жить честной жизнью, остается мало надежды. Под полной луной мальчик становится свидетелем убийства бандитов, которые его поработили, а затем человек, который его спас, окрестил его новым именем. Этого мальчика зовут Шинта, теперь известный как Кеншин Химура, и ему суждено стать фехтовальщиком. Мягкость его сердца не подобает профессии, но его желание защитить невиновных абсолютно.\n\nРуруни Кенсин: Мэйдзи Кенкаку Романтан - Цуиоку-хен подробно описывает происхождение человека, который будет носить имя Хитокири Баттусай, задолго до того, как он поклялся не убивать и до того, как заслужил репутацию убийцы. Сердце молодого человека разрывается между справедливостью и коррупцией, а от его действий зависит судьба нации.\n\n[Написано MAL Rewrite]	8.7	\N	\N	finished	4	29	Studio Deen	44	2026-04-23 15:14:38.877006
+60	Госпожа Кагуя: В любви как на войне - Первый поцелуй никогда не заканчивается	Kaguya-sama: Love is War -The First Kiss That Never Ends-	かぐや様は告らせたい -ファーストキッスは終わらない-	/static/screenshots/60_01.png	/static/screenshots/60_01.png	После своего первого поцелуя Кагуя Синомия и Миюки Широгане не уверены, в каком состоянии их отношения. Тревожная неуверенность в том, можно ли их считать официальной парой, порождает новые проблемы, поскольку Кагуя и Широгане изо всех сил пытаются разобраться в своих чувствах.\n\nПока влюбленные офицеры студенческого совета волнуются, приближается рождественский сезон, и в воздухе витает романтика. Перед лицом всеобщей нежности Кагуя и Широгане должны еще раз пережить свою нежную битву умов. Если они примирят свои чувства друг к другу, они могут оказаться в пределах досягаемости того, чего они оба так долго жаждали: настоящей любви.\n\n[Написано MAL Rewrite]	8.7	\N	\N	finished	1	1	A-1 Pictures	52198	2026-04-23 15:14:38.877006
+81	Блич: Тысячелетняя кровавая война - Противостояние	Bleach: Thousand-Year Blood War - The Conflict	BLEACH 千年血戦篇-相剋譚-	/static/screenshots/81_01.png	/static/screenshots/81_01.png	После впечатляющей битвы с Ичибэем Хёсубэ — лидером Королевской гвардии Общества душ — могущественный Яхве переходит к финальной стадии своего генерального плана. Он стремится убить Короля душ, существо, само существование которого поддерживает статус-кво трех миров: Уэко Мундо, Общества душ и царства людей, из которого родом Ичиго Куросаки и его ближайшие друзья. Одержав победу в схватке с остатками Королевской гвардии, Урю Исида присоединяется к Яхве в его усилиях по созданию нового мира по его образу.\n\nОбладая решимостью и вновь обретенной силой, Ичиго спешит помешать Яхве достичь своей конечной цели и спасти бесчисленное количество жизней в трех существующих мирах. Но у Ичиго сложная родословная, которая делает его уязвимым для зловещего влияния Яхве.\n\nТем временем, в последнем отчаянном гамбите, Дзиро Сакураносукэ Сюнсуй Кёраку, недавно назначенный главным капитаном боевого корпуса Общества душ, заручается поддержкой старого врага, чья огромная сила может переломить ход битвы.\n\n[Написано MAL Rewrite]	8.7	2024	fall	finished	14	24	Pierrot Films	56784	2026-04-23 15:14:38.877006
+82	Первый шаг: Новый претендент	Fighting Spirit: New Challenger	はじめの一歩 新シリーズ	/static/screenshots/82_01.png	/static/screenshots/82_01.png	Чемпион Японии в полулегком весе Иппо Макуноути успешно защитил и сохранил свой титул. Тем временем его соперник, Ичиро Мията, вновь появился в Японии, стремясь завоевать свой собственный пояс в полулёгком весе в Восточно-Тихоокеанской федерации бокса. Однако, когда к нам придет остальной мир, смогут ли лучшие бойцы Японии принять вызов и добиться славы на вершине? Или маленькое островное государство будет раздавлено тяжестью более крупных образований? На этот раз чемпионы станут претендентами, призывающими остальной мир и готовыми продемонстрировать свой боевой дух!\n\n[Написано MAL Rewrite]	8.7	2009	winter	finished	26	23	Madhouse	5258	2026-04-23 15:14:38.877006
+84	Принцесса Мононоке	Princess Mononoke	もののけ姫	/static/screenshots/84_01.png	/static/screenshots/84_01.png	Когда на деревню Эмиси нападает свирепый кабан-демон, молодой принц Ашитака рискует своей жизнью, чтобы защитить свое племя. На последнем вздохе зверь проклинает руку принца, наделяя его демоническими силами и постепенно высасывая из него жизнь. По указанию деревенских старейшин отправиться на запад за лекарством, Ашитака прибывает в Татару, Железный город, где оказывается втянутым в жестокий конфликт: госпожа Эбоши из Татары, поощряющая постоянную вырубку лесов, выступает против принцессы Сан и священных духов леса, которые в ярости из-за разрушений, причиненных людьми. Когда противоборствующие силы природы и человечества начинают сталкиваться в отчаянной борьбе за выживание, Ашитака пытается найти гармонию между ними, одновременно сражаясь со скрытым демоном внутри себя. «Принцесса Мононоке» — это сказка, изображающая связь технологий и природы и показывающая путь к гармонии, которой можно достичь путем взаимного принятия.\n\n[Написано MAL Rewrite]	8.7	\N	\N	finished	1	2	Studio Ghibli	164	2026-04-23 15:14:38.877006
+94	Тетрадь дружбы Нацумэ 4 сезон	Natsume's Book of Friends Season 4	夏目友人帳 肆	/static/screenshots/94_01.png	/static/screenshots/94_01.png	Такаси Нацумэ, робкий эксперт по ёкаям и мастер Книги друзей, продолжает свой путь к самопониманию и принятию с помощью друзей, как новых, так и старых. Его самым важным союзником по-прежнему остается его прожорливый и любящий сакэ телохранитель, высокомерный, но яростно защищающий дух волка Мадара — или Нянко-сенсей, как называют Мадару, когда он обычно маскируется под скромного пухлого кота.\n\nНацуме, хотя и ненадолго разлученный с Ньянко-сенсеем, попадает в засаду и похищается странной группой обезьяноподобных ёкаев в масках, которые утащили его в свой лес, пока они отчаянно ищут Книгу Друзей. Понимая, что его «слугу» увели прямо у него из-под носа, Нянко-сенсей заручается помощью друзей-ёкаев Нацуме и организует спасательную операцию. Однако в лесу духов обезьян таится множество опасных врагов, в том числе клан Матоба, старый враг Нацуме.\n\nНацумэ Юджинчо Ши, простирающийся от грозного убежища Матоба до дома, где прошло детство Нацуме, представляет собой масштабное, но знакомое возвращение в мир опасностей и дружбы, где Нацумэ наконец-то столкнется с демонами своего прошлого.\n\n[Написано MAL Rewrite]	8.6	2012	winter	finished	13	24	Brain's Base	11665	2026-04-23 15:14:38.877006
+98	Оглянись назад	Look Back	ルックバック	/static/screenshots/98_01.png	/static/screenshots/98_01.png	Аюму Фуджино, возможно, учится только в четвертом классе, но она уже пользуется высокой похвалой за свои нарисованные от руки четырехпанельные комиксы, опубликованные в школьной газете. Однако, когда ее просят поделиться страницей с Кёмото — студенткой-затворницей, с которой она никогда не встречалась, — Фудзино впервые чувствует себя неадекватной: ее свободолюбивые рисунки выглядят смущающе дилетантскими рядом с потрясающе детализированным искусством Кёмото.\n\nВ течение года Фуджино отгораживается от мира, одержимо изучая создание манги и неустанно рисуя, чтобы догнать своих безликих конкурентов. Но талант Кёмото намного превосходит ее, и Фуджино бросает все это. Проходит еще год, и в день выпуска Фуджино наконец встречает Кёмото. Эта неопрятная, застенчивая и заикающаяся девушка на самом деле всегда была самой большой поклонницей Фуджино. Их встреча возрождает страсть Фуджино к искусству и положила начало многолетней дружбе, построенной на соперничестве, восхищении и их общей любви к манге.\n\n[Написано MAL Rewrite]	8.6	\N	\N	finished	1	57	Studio DURIAN	58125	2026-04-23 15:14:38.877006
+11	Гинтама 2 сезон	Gintama Season 2	銀魂'	/static/screenshots/11_01.png	/static/screenshots/11_01.png	После годичного перерыва Шинпачи Симура возвращается в Эдо только для того, чтобы наткнуться на шокирующий сюрприз: Гинтоки и Кагура, его коллеги по Ёродзуе, стали совершенно разными персонажами! В замешательстве убегая из штаб-квартиры Ёродзуи, Шинпачи обнаруживает, что все жители Эдо претерпели невероятно сильные изменения как во внешности, так и в личности. Самое невероятное, что его сестра Отаэ вышла замуж за вождя Синсэнгуми и бесстыдного преследователя Исао Кондо и беременна их первым ребенком.\n\nСбитый с толку, Шинпачи соглашается присоединиться к Синсэнгуми по просьбе Отаэ и Кондо и обнаруживает еще более поразительные трансформации, происходящие как в рядах организации, так и за ее пределами. Однако, обнаружив, что заместитель вождя Тоширо Хидзиката остался неизменным, Шинпачи и его маловероятный союзник Синсэнгуми решили вернуть город Эдо таким, каким они его помнили.\n\nС еще большим количеством грязных шуток, насмешливых пародий и бесстыдных упоминаний «Гинтама» следует за командой Ёрозуя через их злоключения в ярком, наполненном инопланетянами мире Эдо.\n\n[Написано MAL Rewrite]	9.0	2011	spring	finished	51	24	Sunrise	9969	2026-04-15 17:57:34.57888
+12	Гинтама: Энчаусн	Gintama: Enchousen	銀魂' 延長戦	/static/screenshots/12_01.png	/static/screenshots/12_01.png	Пока Гинтоки Саката отсутствовал, у Ёродзуя появился новый лидер: Кинтоки, золотоволосый двойник Гинтоки. Чтобы вернуть себе прежнее положение, Гинтоки понадобится помощь окружающих, а это тревожный подвиг, когда никто не может его вспомнить! Кто из Кинтоки и Гинтоки претендует на трон в качестве главного героя?\n\nВдобавок Ёродзуя отправляется обратно в квартал красных фонарей Ёсивара, чтобы помочь пожилой куртизанке в поисках давно потерянного возлюбленного. Хотя район больше не скован цепями под землей, троица вскоре узнает о трагических историях жителей Ёсивары, которые до сих пор их преследуют. Воспоминания за воспоминаниями, в этом квесте Ёрозуя становится свидетелем вечной любви и защищает ее изо всех сил своими сердцами и душами.\n\n[Написано MAL Rewrite]	9.0	2012	fall	finished	13	24	Sunrise	15417	2026-04-15 17:57:34.57888
+67	Магическая битва 2 сезон	Jujutsu Kaisen Season 2	呪術廻戦 懐玉・玉折／渋谷事変	/static/screenshots/67_01.png	/static/screenshots/67_01.png	На дворе 2006 год, и в залах средней школы дзю-дзюцу префектуры Токио эхом разносятся бесконечные ссоры и напряженные споры между двумя неразлучными лучшими друзьями. Источая непоколебимую уверенность, Сатору Годзё и Сугуру Гето верят, что для молодых и могущественных волшебников особого уровня, таких как они сами, нет слишком сложных задач. Им поручено безопасно доставить разумную девушку по имени Рико Аманаи сущности, существование которой является самой сутью мира дзюдзюцу. Однако миссия погружает их в изнурительный водоворот морального конфликта, который грозит разрушить и без того слабую дружбу между колдунами и обычными людьми.\n\nДвенадцать лет спустя студенты и маги оказались на переднем крае защиты от растущего числа проклятий высокого уровня, порожденных негативными эмоциями людей. По мере того как силы сущностей растут, их самосознание и амбиции также возрастают. Проклятия объединяются ради общей цели — искоренить людей и создать мир, в котором будут только проклятые потребители энергии, возглавляемые опасным древним проклятым духом. Чтобы избавиться от своего главного препятствия — сильнейшего колдуна Годзё — они организуют нападение на станцию ​​Сибуя на Хэллоуин. Разделившись на команды, колдуны вступают в бой готовые рискнуть всем, чтобы защитить невинных и себе подобных.\n\n[Написано MAL Rewrite]	8.7	2023	summer	finished	23	23	MAPPA	51009	2026-04-23 15:14:38.877006
+14	Гинтама 5 сезон	Gintama Season 5	銀魂。	/static/screenshots/14_01.png	/static/screenshots/14_01.png	Присоединившись к сопротивлению бакуфу, Гинтоки и банда скрываются вместе с Кацурой и его повстанцами Джоуи. Вскоре к Ёродзуе приближаются Нобуме Имаи и два члена Кихейтай, которые объясняют, что пираты Харусаме восстали против капитана 7-го отряда Камуи и их бывшего союзника Такасуги. Кихейтай дают Гинтоки задание: найти Такасуги, который пропал без вести с тех пор, как его корабль попал в засаду во время рейда Харусаме. Нобуме также делает ошеломляющее открытие относительно Тендошуу, секретной организации, дергающей за ниточки многочисленных фракций, и их лидера Уцуро, призрачной фигуры со сверхъестественным сходством с бывшим учителем Гинтоки.\n\nПутешествуя на космическом корабле Сакамото, Ёродзуя и Кацура отправились на Ракуё, родную планету Кагуры, где собрались различные фракции и назревает напряженность. Давние обиды, политические распри и зловещий всеобъемлющий план Тендосю, наконец, завершаются масштабной и решающей битвой на Ракуё.\n\n[Написано MAL Rewrite]	9.0	2017	winter	finished	12	24	Bandai Namco Pictures	34096	2026-04-15 17:57:34.57888
+17	Корзина фруктов: Финал	Fruits Basket: The Final Season	フルーツバスケット The Final	/static/screenshots/17_01.png	/static/screenshots/17_01.png	Сотни лет назад духи китайского зодиака и их бог поклялись оставаться вместе навечно. Объединенные этим обещанием, одержимые члены семьи Сума всегда вернутся друг к другу при любых обстоятельствах. Однако, когда эти узы сковывают их от свободы, это становится нежелательным бременем — проклятием. Как глава клана, Акито убежден, что у него особая связь с другими Сумами. Пока он отчаянно цепляется за эту фантазию, остальные члены семьи остаются изолированными и подавленными страхом наказания.\n\nТоору Хонда, привязавшийся к семье Сума, полон решимости разорвать сковывающие их цепи. Ее общение с семьей и друзьями воодушевляет ее двигаться вперед в снятии проклятия. Однако из-за ошеломляющих разоблачений ей трудно найти в себе упорство, чтобы продолжить свои начинания. Время медленно утекает, и Тору сталкивается с неопределенным будущим в надежде достичь спокойствия, которое может лежать за пределами всей этой суматохи.\n\n[Написано MAL Rewrite]	8.9	2021	spring	finished	13	23	TMS Entertainment	42938	2026-04-15 17:57:34.57888
+18	Провожающая в последний путь Фрирен 2 сезон	Frieren: Beyond Journey's End Season 2	葬送のフリーレン 第2期	/static/screenshots/18_01.png	/static/screenshots/18_01.png	После экзамена на мага первого класса троица — эльфийский маг Фрирен, воин Старк и первоклассный маг Ферн — получает доступ к опасному Северному плато. По мере того как партия продвигается вперед к Ауреолу, грозные противники вынуждают Старка противостоять его неуверенности, укрепляя его решимость и его роль лидера партии. Тем временем Ферн продолжает дорожить подарками, которыми она была благословлена ​​на протяжении всей своей жизни, каждый из которых является напоминанием о тех, кто ей дорог.\n\nФрирен, все еще соблюдающая свою клятву понять человечество, вспоминает свое путешествие с отрядом Героя и мимолетную встречу с легендарной личностью. Размышляя о ходе времени, эльфийский маг тихо задается вопросом, действительно ли она изменилась, однако в небольших, почти тонких решениях, которые она делает, есть признаки того, что она, возможно, стала более человечной, чем она думает.\n\n[Написано MAL Rewrite]	8.9	2026	winter	finished	10	24	Madhouse	59978	2026-04-15 17:57:34.57888
+20	Гинтама	Gintama	銀魂	/static/screenshots/20_01.png	/static/screenshots/20_01.png	Эдо — город, который был домом для энергии и амбиций самураев по всей стране. Однако после капитуляции феодальной Японии перед могущественными инопланетянами, известными как «Аманто», эти чаяния теперь кажутся недостижимыми. Когда некогда влиятельный сёгунат был преобразован в марионеточное правительство, был принят новый закон, который сразу же запрещает публичное использование мечей. \n\nВстречайте Гинтоки Саката, эксцентричного седовласого человека, который всегда носит с собой деревянный меч и сохраняет свой статус самурая, несмотря на запрет. Как основатель Yorozuya, небольшого бизнеса по случайным заработкам, Гинтоки часто пытается помочь другим людям, хотя обычно довольно странными и непредвиденными способами. \n\nЕму помогает Шинпачи Симура, мальчик в очках, предположительно изучающий путь самурая; Кагура, девочка-сорванец со сверхчеловеческой силой и бесконечным аппетитом; и Садахару, их гигантской домашней собаки, которая любит кусать людей за головы, Ёродзуя сталкиваются с чем угодно: от инопланетной королевской семьи до драок с местными бандами в постоянно меняющемся мире Эдо.\n\n[Написано MAL Rewrite]	8.9	2006	spring	finished	201	24	Sunrise	918	2026-04-15 17:57:34.57888
+58	Королевство 5 сезон	Kingdom Season 5	キングダム 第5シリーズ	/static/screenshots/58_01.png	/static/screenshots/58_01.png	Пятый сезон Королевства.	8.7	2024	winter	finished	13	24	Studio Pierrot	53223	2026-04-23 15:14:38.877006
+32	Атака титанов	Attack on Titan: The Last Attack	劇場版 進撃の巨人 完結編 THE LAST ATTACK	/static/screenshots/32_01.png	/static/screenshots/32_01.png	Сборник фильмов Shingeki no Kyojin: The Final Season - Kanketsu-hen.	8.8	\N	\N	finished	1	2	MAPPA	59571	2026-04-15 17:57:34.57888
+19	Кланнад: Продолжение истории	Clannad: After Story	CLANNAD〜AFTER STORY〜 クラナド アフターストーリー	/static/screenshots/19_01.png	/static/screenshots/19_01.png	Томоя Окадзаки и Нагиса Фурукава окончили среднюю школу и вместе переживают эмоциональные американские горки взросления. Не имея возможности определиться с курсом своего будущего, Томоя осознает ценность сильной трудовой этики и силу поддержки Нагисы. Благодаря преданности делу и единству целей пара пытается решить свои личные проблемы, углубить старые отношения и создать новые связи.\n\nВ Иллюзорном мире время также движется вперед. С приближением зимы на равнинах становится холодно, Иллюзорная Девушка и Мусорная Кукла попадают в сложную ситуацию, которая раскрывает истинную цель Мира.\n\n[Написано MAL Rewrite]	8.9	2008	fall	finished	24	24	Kyoto Animation	4181	2026-04-15 17:57:34.57888
+28	Атака титанов	Attack on Titan: Final Season - The Final Chapters	進撃の巨人 The Final Season完結編	/static/screenshots/28_01.png	/static/screenshots/28_01.png	После катастрофических действий Эрена Йегера его друзья и бывшие враги образуют союз против его геноцида. Хотя когда-то заклятые враги, Армин Арлерт, Микаса Акерман и оставшиеся члены Скаутского полка объединяют свои силы с Райнером Брауном и выжившими марлианскими военными. Их скудный единый фронт отправляется на миссию остановить гнев Эрена и, если возможно, спасти своего старого товарища.\n\nЭрен продвигается вперед любой ценой, борясь со своим внутренним хаосом. Хотя Эрен испытывает огромное раскаяние по поводу своего ужасного вторжения, он верит, что питает благородные намерения: он считает, что предстоящий путь — единственный способ спасти своих друзей и, в большей степени, свой народ.\n\nПротивоборствующие батальоны приближаются к неизбежному финальному столкновению, которое может унести жизни миллионов людей. Хотя им предстоит столкнуться с армией монстров, превосходящей все, что они могли себе представить, Микаса, Армин и их союзники храбро выстоят перед лицом неминуемой гибели.\n\n[Написано MAL Rewrite]	8.9	\N	\N	finished	2	1	MAPPA	51535	2026-04-15 17:57:34.57888
+46	Атака титанов	Attack on Titan: Final Season Part 2	進撃の巨人 The Final Season Part 2	/static/screenshots/46_01.png	/static/screenshots/46_01.png	Обратившись как против своих бывших союзников, так и против врагов, Эрен Йегер приводит в действие катастрофический план. Под руководством зверя-титана Зика Эрен принимает крайние меры, чтобы положить конец древнему конфликту между Марли и Элдией, но его истинные намерения остаются загадкой. Глубоко погружаясь в прошлое своей семьи, Эрен борется за то, чтобы контролировать свою судьбу.\n\nМежду тем, давние враждующие нации Марли и Элдия используют как солдат, так и Титанов в жестокой гонке, чтобы уничтожить друг друга. Райнер Браун использует свои силы в отчаянной попытке сдержать милитаристские силы Эрена, а его собратья-элдийцы — дети Фалько Грайс и Габи Браун — изо всех сил пытаются выжить в разворачивающемся хаосе.\n\nВ другом месте друзья детства Эрена Микаса Акерман и Армин Арлерт остаются в тюрьме вместе с бывшими товарищами Эрена из Разведкорпуса, обеспокоенные чудовищной трансформацией Эрена. Слепо веря, что Эрен все еще тайно питает добрые намерения, Микаса и другие вступают в бой, пытаясь спасти душу своего друга.\n\n[Написано MAL Rewrite]	8.8	2022	winter	finished	12	23	MAPPA	48583	2026-04-15 17:57:34.57888
+57	Звёздное дитя	Idol	アイドル	/static/screenshots/57_01.png	/static/screenshots/57_01.png	Клип на песню Idol группы YOASOBI. Песня была использована в качестве вступительной темы аниме [Oshi no Ko].	8.7	\N	\N	finished	1	3	Doga Kobo	55016	2026-04-23 15:14:38.877006
+24	Мартовский лев 2 сезон	March Comes In Like a Lion 2nd Season	3月のライオン 第2シリーズ	/static/screenshots/24_01.png	/static/screenshots/24_01.png	Сейчас, на втором году обучения в старшей школе, Рей Кирияма продолжает преодолевать трудности как в профессиональном мире сёги, так и в личной жизни. В окружении ярких личностей в зале сёги, школьном клубе и местном сообществе его одинокая оболочка постепенно начинает трескаться. Среди них три сестры Кавамото — Акари, Хината и Момо, которые создают нежную и семейную связь с Рей. Благодаря этим связям он понимает, что каждый обременен своими эмоциональными трудностями, и начинает учиться полагаться на других, поддерживая их в ответ. \n\nТем не менее жизнь профессионала непроста. Между турнирами, чемпионатами и титульными матчами напряжение возрастает по мере того, как Рей продвигается по служебной лестнице и сталкивается с невероятно опытными противниками. Управляя отношениями с теми, кто стал ему близок, игрок в сёги продолжает искать причину, по которой он играет в игру, которая определяет его карьеру.\n\n[Написано MAL Rewrite]	8.9	2017	fall	finished	22	25	Shaft	35180	2026-04-15 17:57:34.57888
+2	Невероятные приключения ДжоДжо: Гонки стального шара	Steel Ball Run: JoJo's Bizarre Adventure	スティール・ボール・ラン ジョジョの奇妙な冒険	/static/screenshots/2_01.png	/static/screenshots/2_01.png	На американском Диком Западе вот-вот начнется величайшая гонка в мире. Тысячи людей выстраиваются в очередь в Сан-Диего, чтобы проехать более шести тысяч километров, чтобы получить шанс выиграть главный приз в пятьдесят миллионов долларов. Поскольку эпоха лошадей подходит к концу, участникам разрешается использовать любое транспортное средство, которое они пожелают. Участникам придется терпеть изнурительные условия, преодолевая до ста километров в день по неизведанным пустошам. Steel Ball Run – поистине уникальное мероприятие.\n\nЮный Джонни Джостар, бывший наездник-калека, приехал в Сан-Диего, чтобы посмотреть начало скачек. Там он встречает Джайро Цеппели, гонщика с двумя стальными шарами на поясе вместо пистолета. Джонни становится свидетелем того, как Джайро использует один из своих стальных шаров, чтобы высвободить фантастическую силу, заставляя мужчину выстрелить в себя во время дуэли. В разгар действия Джонни случайно касается стального шара и чувствует, как сила проходит через его ноги, что позволяет ему встать впервые за два года. Поклявшись раскрыть тайну стальных шаров, Джонни решает принять участие в гонке, и так начинается его причудливое приключение по Америке на забеге Steel Ball Run.\n\n[Написано MAL Rewrite]	9.2	\N	\N	airing	0	47	David Production	61469	2026-04-15 17:57:34.57888
+31	Королевство 3 сезон	Kingdom Season 3	キングダム 第3シリーズ	/static/screenshots/31_01.png	/static/screenshots/31_01.png	После успешной кампании Санью армия Цинь, включая командующего Синь из 1000 человек, стала еще на несколько дюймов ближе к осуществлению мечты короля Ин Чжэна об объединении Китая. Имея теперь под своим контролем крупный географический плацдарм в штате Вэй, Цинь устремляет свои взоры на восток, в сторону оставшихся воюющих государств.\n\nТем временем Ли Му — беспрецедентный стратег и недавно назначенный премьер-министр штата Чжао — воспользовался временным перемирием Чжао с Цинь, чтобы без перерыва вести переговоры с другими государствами. Казалось бы, без предупреждения Ин Чжэн получает известие о том, что армии из штатов Чу, Чжао, Вэй, Хань, Янь и Ци перешли на территорию Цинь. Слишком поздно осознав цель перемирия Ли Му с Цинь, Чжэн быстро собирает своих советников, чтобы разработать план борьбы с коалиционной армией шести государств на их пороге. Впервые в истории государству Цинь грозит полное разрушение, и оно должно использовать все имеющиеся в его распоряжении ресурсы и стратегии, чтобы не допустить исчезновения с лица земли.\n\n[Написано MAL Rewrite]	8.8	2020	spring	finished	26	25	Studio Pierrot	40682	2026-04-15 17:57:34.57888
+35	Твоё имя	Your Name.	君の名は。	/static/screenshots/35_01.png	/static/screenshots/35_01.png	Мицуха Миямидзу, старшеклассница, мечтает прожить жизнь мальчика в шумном городе Токио — мечта, которая резко контрастирует с ее нынешней жизнью в сельской местности. Тем временем в городе Таки Тачибана живет насыщенной жизнью, будучи учеником старшей школы, одновременно совмещая подработку и надежды на будущее в сфере архитектуры.\n\nОднажды Мицуха просыпается в чужой комнате и внезапно обнаруживает, что живет жизнью своей мечты в Токио, но в теле Таки! В другом месте Таки живет жизнью Мицухи в скромной сельской местности. В поисках ответа на это странное явление они начинают искать друг друга.\n\nКими но На ва. вращается вокруг действий Мицухи и Таки, которые начинают оказывать драматическое влияние на жизни друг друга, сплетая их в ткань, скрепленную судьбой и обстоятельствами.\n\n[Написано MAL Rewrite]	8.8	\N	\N	finished	1	1	CoMix Wave Films	32281	2026-04-15 17:57:34.57888
+80	Клинок, рассекающий демонов Фильм 1: Бесконечный замок	Demon Slayer: Kimetsu no Yaiba - The Movie: Infinity Castle - Part 1: Akaza Returns	劇場版 鬼滅の刃 無限城編 第一章 猗窩座再来	/static/screenshots/80_01.png	/static/screenshots/80_01.png	Первый аниме-фильм экранизации трилогии арки «Бесконечный замок».	8.7	\N	\N	finished	1	2	ufotable	59192	2026-04-23 15:14:38.877006
+3	Стальной алхимик: Братство	Fullmetal Alchemist: Brotherhood	鋼の錬金術師 FULLMETAL ALCHEMIST	/static/screenshots/3_01.png	/static/screenshots/3_01.png	После того, как ужасающий алхимический эксперимент в доме Элриков провалился, братья Эдвард и Альфонс остались в катастрофической новой реальности. Игнорируя алхимический принцип, запрещающий трансмутацию человека, мальчики попытались вернуть к жизни свою недавно умершую мать. Вместо этого они понесли жестокую личную потерю: тело Альфонса распалось, а Эдвард потерял ногу, а затем пожертвовал рукой, чтобы сохранить душу Альфонса в физическом мире, привязав ее к огромным доспехам.\n\nБратьев спасают соседка Пинако Рокбелл и ее внучка Уинри. Известная как гений биомеханической инженерии, Уинри создает протезы конечностей для Эдварда, используя «автоброню», прочный универсальный металл, используемый в роботах и ​​боевой броне. После многих лет обучения братья Элрик отправились на поиски восстановления своего тела, найдя Философский камень — могущественный драгоценный камень, который позволяет алхимику бросить вызов традиционным законам эквивалентного обмена.\n\nЭдвард становится печально известным алхимиком и получает прозвище «Цельнометаллический», а путешествие мальчиков втягивает их в растущий заговор, который угрожает судьбе мира.\n\n[Написано MAL Rewrite]	9.1	2009	spring	finished	64	24	Bones	5114	2026-04-15 17:57:34.57888
+41	Истории монстров часть 3: Холодная кровь	Kizumonogatari Part 3: Cold-Blooded	傷物語〈Ⅲ冷血篇〉	/static/screenshots/41_01.png	/static/screenshots/41_01.png	Помогая возродить легендарного вампира Ацеролу-Ориона, Ацеролу-Орион-Сердце-под-клинком, Койоми Арараги сама стала вампиром и ее слугой. Кисс-Шот уверена, что сможет превратить его обратно в человека, но только однажды вернув себе полную силу. \n\nАрараги выследил трех охотников на вампиров, которые победили Кисс-Шот, и забрал ее конечности, чтобы вернуть ей полную силу. Однако теперь, когда Арараги почти добился того, за что боролся все это время, ему нужно задуматься, действительно ли он этого хочет. Как только он оживит этого могущественного бессмертного вампира, неизвестно, что она может сделать, и остановить ее будет невозможно.\n\nНо в этой истории есть еще кое-что, чего Арараги не понимает. Если такой новорожденный вампир, как он, смог победить охотников, как они одолели Кисс-Шота? Может ли он довериться ей, чтобы она снова превратила его в человека? И как это вообще возможно?\n\nАрараги на пределе своих возможностей, но он должен принять решение, и, возможно, эту ситуацию невозможно разрешить, не сделав того, о чем он пожалеет…\n\n[Написано MAL Rewrite]	8.8	\N	\N	finished	1	1	Shaft	31758	2026-04-15 17:57:34.57888
+42	Сага о Винланде	Vinland Saga	ヴィンランド・サガ	/static/screenshots/42_01.png	/static/screenshots/42_01.png	Юный Торфинн вырос, слушая рассказы старых моряков, которые путешествовали по океану и достигли легендарного места Винланд. Говорят, что это теплое и плодородное место, где не будет необходимости сражаться – совсем не похожее на замерзшую деревню в Исландии, где он родился, и уж точно не похоже на его нынешнюю жизнь наемника. Война теперь его дом. Хотя его отец однажды сказал ему: «У тебя нет врагов, ни у кого нет. Нет никого, кому можно было бы причинить боль», когда он вырос, Торфинн понял, что нет ничего более далекого от истины.\n\nВойна между Англией и датчанами с каждым годом обостряется. Смерть стала обычным явлением, и наемники-викинги наслаждаются каждым ее моментом. Союз с любой из сторон вызовет масштабное изменение баланса сил, и викинги будут рады сделать себе имя и забрать любую добычу, которую заработают на этом пути. Среди хаоса Торфинн должен отомстить и убить Аскеладда, человека, убившего его отца. Единственный рай для викингов, кажется, — это бушующая эпоха войны и смерти.\n\n[Написано MAL Rewrite]	8.8	2019	summer	finished	24	24	Wit Studio	37521	2026-04-15 17:57:34.57888
+44	Волейбол 3 сезон	Haikyu!! 3rd Season	ハイキュー!! 烏野高校 VS 白鳥沢学園高校	/static/screenshots/44_01.png	/static/screenshots/44_01.png	После победы над старшей школой Аоба Дзёсай, старшая школа Карасуно, которую когда-то называли «падшей силой, вороной, которая не умеет летать», наконец, достигла апогея жаркого весеннего турнира. Теперь, чтобы выйти на национальный чемпионат, команде Карасуно необходимо победить сильную Академию Шираторидзава. Самым большим препятствием для Карасуно является ас их противника Вакатоши Ушидзима, игрок номер один в префектуре Мияги и один из трех лучших асов страны.\n\nНа национальный турнир попадет только сильнейшая команда. Поскольку этот матч — последний шанс игроков-третьекурсников пройти квалификацию на национальный чемпионат, Карасуно придется использовать все, чему они научились во время тренировочных сборов и предыдущих матчей, чтобы добиться победы. Наполненные беспокойством и волнением, обе команды полны решимости выйти на первое место в третьем сезоне Haikyuu!!.\n\n[Написано MAL Rewrite]	8.8	2016	fall	finished	10	24	Production I.G	32935	2026-04-15 17:57:34.57888
+48	Истории монстров 2 сезон	Monogatari Series: Second Season	〈物語〉シリーズ セカンドシーズン	/static/screenshots/48_01.png	/static/screenshots/48_01.png	Призраки, странности и боги продолжают проявляться вокруг Коёми Арараги и его сплоченной группы друзей: Цубаса Ханекава, скромный гений группы; Синобу Ошино, местный вампир, любящий пончики; спортивный девиант Суруга Канбару; радостный дух Майои Хатикудзи; Милая поклонница Коёми Надеко Сэнгоку; и Хитаги Сенджогахара, эклектичная девушка Коёми.\n\nНачался новый семестр, и, поскольку над Коёми приближается выпускной, он должен быстро решить, по какому пути он пойдет, а также какие отношения он сформирует и друзей, которых он спасет. Но когда начинают разворачиваться странные события, Коёми нигде не найти, а в его отсутствие появилось злобное привидение тигра. Ханекава стала его целью, и она быстро понимает, что должна постоять за себя.\n\n[Написано MAL Rewrite]	8.8	2013	summer	finished	26	25	Shaft	17074	2026-04-15 17:57:34.57888
+52	Звук! Эуфониум 3	Sound! Euphonium 3	響け！ユーフォニアム3	/static/screenshots/52_01.png	/static/screenshots/52_01.png	После завершения ансамблевого конкурса участники концертного оркестра средней школы Китаудзи теперь стремятся выиграть золотую медаль на национальном конкурсе. Для президента третьего курса клуба Кумико Оумаэ и ее друзей это последний шанс перед выпуском. Наполненная ожиданием и тревогой, Кумико беспокоится, сможет ли она успешно возглавить группу.\n\nВ процессе борьбы Кумико встречает переводную студентку Маю Куроэ. Благодаря своей нежной манере поведения и талантливым навыкам эуфониума, Маю была участницей концертной группы школы девочек Сейры и регулярно выступала на национальных соревнованиях. Хотя Маю дружелюбна, Кумико не может не испытывать неописуемых ощущений от их встречи.\n\nПо мере прибытия новых членов и реализации планов клуб, испытывающий ненасытную жажду золотой медали, узнает, что на самом деле нужно, чтобы продвинуться к достижению национального уровня.\n\n[Написано MAL Rewrite]	8.7	2024	spring	finished	13	24	Kyoto Animation	39894	2026-04-23 15:14:38.877006
+59	О движении Земли	Orb: On the Movements of the Earth	チ。―地球の運動について―	/static/screenshots/59_01.png	/static/screenshots/59_01.png	Двенадцатилетний вундеркинд Рафаль верит в то, что нужно жить рационально, чтобы заслужить похвалу и уважение общества, не поддаваясь эмоциям. С этой целью он публично заявляет о своем намерении изучать богословие — академическую область, пользовавшуюся наибольшим уважением в Польше начала 15 века. Однако встреча с загадочным человеком переворачивает жизнь Рафаля, вызывая нелогичное желание вместо этого заняться своей страстью к астрономии.\n\nРафаль полон решимости доказать красоту и рациональность гелиоцентризма — теории, согласно которой Земля вращается вокруг Солнца. Это убеждение считается ересью могущественной Церкви, которая пропагандирует геоцентризм — Солнце, вращающееся вокруг Земли — как единственную истину Вселенной. Те, чьи убеждения не совпадают с волей Церкви, страдают от непостижимо ужасных последствий.\n\nВ поисках доказательств гелиоцентрической модели Вселенной Рафаль пытается получить точные расчеты и построить эмпирические теории. Однако его самая большая задача заключается в том, чтобы провести это исследование осторожно, чтобы его не постигла та же участь, что и других еретиков.\n\n[Написано MAL Rewrite]	8.7	2024	fall	finished	25	25	Madhouse	52215	2026-04-23 15:14:38.877006
+5	Врата Штейна	Steins;Gate	STEINS;GATE	/static/screenshots/5_01.png	/static/screenshots/5_01.png	Эксцентричный учёный Ринтаро Окабе обладает неиссякаемой жаждой научных исследований. Вместе со своим легкомысленным, но благонамеренным другом Маюри Сииной и соседом по комнате Итару Хасидой Окабе основывает Лабораторию гаджетов будущего в надежде создать технологические инновации, которые сбивают с толку человеческую психику. Несмотря на заявления о величии, единственный примечательный «гаджет», созданный этим трио, — это микроволновая печь, обладающая загадочной способностью превращать бананы в зеленую слизь.\n\nОднако, когда Окабе посещает конференцию по путешествиям во времени, он переживает серию странных событий, которые заставляют его поверить, что гаджет «Телефонная микроволновая печь» - это нечто большее, чем кажется на первый взгляд. Судя по всему, способный отправлять текстовые сообщения в прошлое с помощью микроволновой печи, Окабе продолжает экспериментировать с «машиной времени», привлекая гнев и внимание загадочной организации SERN.\n\nИз-за нового открытия Окабе и его друзья оказываются в постоянной опасности. Пытаясь смягчить ущерб, который его изобретение нанесло временной шкале, Окабе борется не только за спасение своих близких, но и за сохранение своего унижающего рассудка.\n\n[Написано MAL Rewrite]	9.1	2011	spring	finished	24	24	White Fox	9253	2026-04-15 17:57:34.57888
+64	Моя геройская академия: Финальный сезон	My Hero Academia Final Season	僕のヒーローアカデミア FINAL SEASON	/static/screenshots/64_01.png	/static/screenshots/64_01.png	Заключительные этапы тотальной войны между героями и злодеями разворачиваются, пока мир наблюдает, как сталкиваются символы мира и разрушения. Когда Всемогущий серьезно ранен, глобальный страх охватывает страх, поскольку судьба общества висит на волоске, а угроза Всех За Одного и Томуры Сигараки дает понять, что конфликт далек от завершения.\n\nКогда надежда начинает угасать, Изуку «Деку» Мидория стоит на передовой, не давая войне закончиться в отчаянии. Выйдя за пределы своих возможностей и поддержанный Кацуки Бакуго и другими героями, сражающимися рядом с ним, Деку становится центральной силой, противостоящей краху. Конфликт становится определяющим поворотным моментом для общества, когда будущее будет доверено победившей стороне.\n\n[Написано MAL Rewrite]	8.7	2025	fall	finished	11	23	Bones Film	60098	2026-04-23 15:14:38.877006
+79	Королевство 6 сезон	Kingdom Season 6	キングダム 第6シリーズ	/static/screenshots/79_01.png	/static/screenshots/79_01.png	В древнем Китае, в период Воюющих царств, бывший слуга по имени Синь поднимается по служебной лестнице с мечтой: стать величайшим полководцем под небесами. Сражаясь плечом к плечу с королем Цинь Ин Чжэном, который стремится объединить Китай и положить конец хаосу, Синь выводит на поле боя свое собственное подразделение, «Отряд Фэй Синь».\n\nОтвоевав власть у влиятельного канцлера Бувэй Люя, король Ин Чжэн начинает закладывать основу для нового, единого правового государства при поддержке таких ключевых союзников, как стратег Чанпин Цзюнь и законник Ли Си.\n\nКогда Цинь начинает кампанию по захвату новых территорий государства Чжао, их продвижение останавливает блестящий стратег Ли Му. В ответ Чанпин Цзюнь разрабатывает смелый план: обойти оборону Чжао и нанести удар по ключевому городу Гё, недалеко от столицы Чжао.\n\nДля осуществления этого рискованного маневра формируется мощная коалиционная армия во главе с тактиками Оу Сеном (Ван Цзянь), Кан Ки (Хуань И) и королевой воинов Йо Тан Ва (Ян Дуаньхэ). К ним присоединяются следующее поколение командиров Цинь: отряд Фэй Синь Синя, отряд Гаку Ка Моу Тена (Мэн Тянь) и отряд Гёку Хоу Оу Хона (Ван Бен), каждый из которых действует независимо.\n\nНачинается жестокая битва за Гё, поскольку будущее объединения Цинь висит на волоске.\n\n(Источник: Новости MAL)	8.7	2025	fall	finished	13	24	Studio Pierrot	61517	2026-04-23 15:14:38.877006
+85	Истории монстров: Межсезонье и сезон монстров	Monogatari Series: Off & Monster Season	〈物語〉シリーズ オフ&モンスターシーズン	/static/screenshots/85_01.png	/static/screenshots/85_01.png	Коёми Арараги провел свой последний год в старшей школе, помогая девочкам в своем городе решать различные сверхъестественные недуги. Но теперь Арараги уехал учиться в университет, оставив своих друзей наедине с новыми проблемами и проклятиями, которые их преследуют. Ёцуги Ононоки, когда-то человеческий труп, а теперь живая кукла, поселяется в доме Арараги, присматривая за своей сестрой Цукихи, девушкой, хранящей собственную мистическую тайну. В рамках своих обязанностей Ёцуги заменяет освободившуюся роль Арараги в качестве оккультного эксперта, помогая другим горожанам решать их проблемы.\n\nОдна из этих девочек, ученица средней школы Надеко Сэнгоку, медленно восстанавливается после недавнего столкновения с паранормальными явлениями. Она избегает возвращения в школу, вместо этого проводит время одна в своей комнате и реализует свою мечту стать профессиональным художником манги. Чтобы ускорить стремление Надеко к овладению своим ремеслом, Ёцуги убеждает ее создать четыре свои копии, каждая из которых представляет отдельный аспект личности Надеко. Однако клоны отказываются помогать Надеко, вместо этого убегая в город и создавая хаос. Теперь, вынужденная бороться со своим раздробленным чувством идентичности, Надеко намеревается поймать их и разрешить свой внутренний конфликт.\n\n[Написано MAL Rewrite]	8.7	\N	\N	finished	14	25	Shaft	57864	2026-04-23 15:14:38.877006
+8	Гинтама: Финал	Gintama: The Very Final	銀魂 THE FINAL	/static/screenshots/8_01.png	/static/screenshots/8_01.png	Прошло два года после вторжения Тендосю на центральный терминал О-Эдо. С тех пор пути Ёрозуя разошлись. Предвидя возвращение Уцуро, Гинтоки Саката начинает исследовать силовые линии Земли в поисках следов Альтаны другого человека. После встречи с остатками Тендосю, которые продолжают двигаться в поисках бессмертия, Гинтоки возвращается в Эдо.\n\nПозже перегруппированные Синсэнгуми и Ёродзуя начинают атаку на оккупированный Центральный терминал. Поскольку Альтана, собранная обломками корабля Тендосю, находится под угрозой взрыва, Ёрозуя и их союзники сражаются со своими врагами, в то время как безопасность Эдо — и остального мира — висит на волоске. Выполняя волю своего учителя, бывшие ученики Сёё Ёсиды объединяются и в последний раз переживают свое прошлое, пытаясь спасти свое будущее.\n\n[Написано MAL Rewrite]	9.1	\N	\N	finished	1	1	Bandai Namco Pictures	39486	2026-04-15 17:57:34.57888
+95	Пинг-понг анимация	Ping Pong the Animation	ピンポン THE ANIMATION	/static/screenshots/95_01.png	/static/screenshots/95_01.png	Несмотря на то, что Макото «Улыбка» Цукимото и Ютака «Пеко» Хосино являются полярными противоположностями, они были лучшими друзьями с детства. Хотя чрезмерно самоуверенный Пеко стремится стать лучшим игроком в пинг-понг в мире, он часто пропускает тренировки, вызывая гнев своих товарищей по команде по пинг-понгу средней школы Катасэ. Между тем, Смайл, несмотря на свой врожденный спортивный талант, не может не сдерживать всю свою силу, играя против других. Благодаря взаимной любви к пинг-понгу у них сложилась связь, которая, казалось бы, нерушима.\n\nКогда Пеко слышит, что бывший игрок сборной Китая приезжает в Японию, он тащит Смайла в конкурирующую среднюю школу Цудзидо, чтобы понаблюдать за ними. Последующая поездка приводит к столкновению Пеко и Конга Венге, который с подавляющим преимуществом побеждает первого в одной игре. Ошеломленный таким огромным поражением, Пеко задается вопросом, почему он вообще играет. Видя его потенциал как игрока, тренер Катасе начинает тренировать Смайла, чтобы преодолеть его колебания, но он не хочет играть, если это не для удовольствия.\n\nПока эти двое изо всех сил пытаются найти смысл в спорте, множество более сильных игроков — каждый со своими внутренними раздорами — ждут их на турнире между школами, где только самые лучшие могут выстоять. Но когда эти молодые спортсмены позволяют своим необузданным амбициям не сдерживаться, трудности, с которыми они сталкиваются, рисуют мрачную реальность на пути к славе.\n\n[Написано MAL Rewrite]	8.6	2014	spring	finished	11	23	Tatsunoko Production	22135	2026-04-23 15:14:38.877006
+96	Необычное такси	Odd Taxi	オッドタクシー	/static/screenshots/96_01.png	/static/screenshots/96_01.png	Эксцентричный и прямолинейный морж Хироши Одокава живет относительно нормальной жизнью. Он зарабатывает на жизнь водителем такси и там знакомится с несколькими уникальными личностями: безработным Таити Кабасавой, который твердо намерен стать вирусным, загадочной медсестрой Михо Сиракавой, борющимся комедийным дуэтом «Homo Sapiens» и Добу, известным преступником.\n\nНо простой образ жизни Одокавы вот-вот перевернётся с ног на голову. Дело о пропавшей девушке, которое расследовала полиция, ведет к нему, и теперь якудза и дуэт коррумпированных полицейских преследуют его.\n\n[Написано MAL Rewrite]	8.6	2021	spring	finished	13	23	OLM	46102	2026-04-23 15:14:38.877006
+4	Человек-Бензопила - Фильм: Арка Рэзе	Chainsaw Man – The Movie: Reze Arc	劇場版 チェンソーマン レゼ篇	/static/screenshots/4_01.png	/static/screenshots/4_01.png	Несмотря на непосредственные трудности, возникшие после того, как он стал охотником на дьяволов в Бюро общественной безопасности, Денджи быстро адаптировался к своей новой жизни и обязанностям. Когда хаос первого испытания Денджи с общественной безопасностью утихает, элитная охотница на дьяволов Макима решает пригласить Денджи на свидание. Хотя это свидание усиливает его привязанность к Макиме, и он клянется не влюбляться ни в кого другого, Денджи вскоре оказывается в сложной ситуации, когда встречает, казалось бы, невинного работника кафе по имени Резе.\n\nСвоей напористой и кокетливой манерой поведения Резе сразу же покоряет сердце Денджи, заставляя его часто посещать кафе, где она работает, и углублять свои отношения с ней. Однако Денджи совершенно не осознает тот факт, что встреча с Резе может иметь серьезные последствия, помимо простого решения, какой женщине принадлежит его сердце. \n\n[Написано MAL Rewrite]	9.1	\N	\N	finished	1	1	MAPPA	57555	2026-04-15 17:57:34.57888
+6	Атака титанов 3 сезон 2 часть	Attack on Titan Season 3 Part 2	進撃の巨人 Season3 Part.2	/static/screenshots/6_01.png	/static/screenshots/6_01.png	Стремясь восстановить угасающую надежду человечества, Разведкорпус приступает к миссии по возвращению Стены Марии, где битва против беспощадных «Титанов» снова выходит на сцену.\n\nВернувшись в разрушенный район Шиганшина, который когда-то был его домом, Эрен Йегер и Корпус обнаруживают, что город, как ни странно, не занят Титанами. Даже после того, как внешние ворота закрыты, они, как ни странно, не встречают сопротивления. Миссия протекает гладко, пока Армин Арлерт, очень подозрительный к отсутствию врага, не обнаруживает тревожные признаки потенциального заговора против него. \n\nВо второй части 3-го сезона Shingeki no Kyojin Эрен клянется вернуть все, что когда-то принадлежало ему. Вместе с ним Разведкорпус стремится – ценой бесчисленных жертв – проложить путь к победе и раскрыть секреты, запертые в подвале семьи Йегер.\n\n[Написано MAL Rewrite]	9.1	2019	spring	finished	10	23	Wit Studio	38524	2026-04-15 17:57:34.57888
+13	Легенда о героях галактики	Legend of the Galactic Heroes	銀河英雄伝説	/static/screenshots/13_01.png	/static/screenshots/13_01.png	150-летняя тупиковая ситуация между двумя межзвездными сверхдержавами, Галактической Империей и Альянсом Свободных Планет, подходит к концу, когда появляется новое поколение лидеров: идеалистический военный гений Рейнхард фон Лоэнграмм и сдержанный историк СПА Ян Вэньли.\n\nПока Рейнхард поднимается по служебной лестнице Империи с помощью своего друга детства Зигфрида Кирхейса, он должен сражаться не только с войной, но и с остатками распадающейся династии Гольденбаумов, чтобы освободить свою сестру от кайзера и объединить человечество под одним настоящим правителем. Тем временем, на другом конце галактики, Ян – решительный сторонник демократических идеалов – должен твердо стоять в своих убеждениях, несмотря на борьбу FPA, и показать своему ученику Джулиану Минцу, что автократия не является решением проблемы.\n\nПоскольку идеологии сталкиваются среди многочисленных жертв войны, два стратегических гения должны задать себе вопрос, какова истинная причина их битвы.\n\n[Написано MAL Rewrite]	9.0	\N	\N	finished	110	26	K-Factory	820	2026-04-15 17:57:34.57888
+7	Гинтама 4 сезон	Gintama Season 4	銀魂°	/static/screenshots/7_01.png	/static/screenshots/7_01.png	Гинтоки, Шинпачи и Кагура возвращаются в роли веселых, но сломленных членов команды Ёродзуя! Живя в альтернативной реальности Эдо, где мечи запрещены, а инопланетные повелители завоевали Японию, они пытаются добиться успеха, выполняя любую работу, которую могут получить в свои руки. Однако Шинпачи и Кагура до сих пор не получили зарплату... Неужели Гин-чан действительно тратит все эти деньги, играя в пачинко?\n\nТем временем, когда однажды ночью Гинтоки пьяный, шатаясь, возвращается домой, неподалеку терпит крушение инопланетный космический корабль. Смертельно раненый член экипажа выходит из корабля и дает Гинтоки странное устройство в форме часов, предупреждая его, что оно невероятно мощное и его необходимо беречь. Приняв его за свой будильник, Гинтоки на следующее утро разбивает устройство и внезапно обнаруживает, что мир за пределами его квартиры замер. Вместе с Кагурой и Шинпачи он отправляется починить устройство; хотя, как обычно, для команды Ёродзуи всё не так просто.\n\nВ четвертом сезоне «Гинтамы», наполненном ироничным юмором и моментами искренних эмоций, Гинтоки и его друзья сталкиваются как с самыми веселыми злоключениями, так и с самыми опасными кризисами.\n\n[Написано MAL Rewrite]	9.1	2015	spring	finished	51	24	Bandai Namco Pictures	28977	2026-04-15 17:57:34.57888
+9	Охотник х Охотник	Hunter x Hunter	HUNTER×HUNTER（ハンター×ハンター）	/static/screenshots/9_01.png	/static/screenshots/9_01.png	Охотники посвящают себя выполнению опасных задач: от путешествия по неизведанным территориям мира до поиска редких предметов и монстров. Прежде чем стать Охотником, необходимо сдать Экзамен Охотника — процесс отбора с высоким риском, в результате которого большинство кандидатов становятся инвалидами или, что еще хуже, умирают.\n\nАмбициозные участники, бросающие вызов пресловутому экзамену, преследуют свою причину. Что движет 12-летним Гоном Фриксом, так это поиск Джинга, его отца и самого Охотника. Полагая, что он встретит своего отца, став Охотником, Гон делает первый шаг, чтобы пройти тот же путь.\n\nВо время экзамена на охотника Гон подружился со студентом-медиком Леорио Паладикнайтом, мстительным Курапикой и бывшим убийцей Киллуа Золдиком. Хотя их мотивы сильно отличаются друг от друга, они объединяются ради общей цели и отправляются в опасный мир.\n\n[Написано MAL Rewrite]	9.0	2011	fall	finished	148	23	Madhouse	11061	2026-04-15 17:57:34.57888
+15	Блич: Тысячелетняя кровавая война	Bleach: Thousand-Year Blood War	BLEACH 千年血戦篇	/static/screenshots/15_01.png	/static/screenshots/15_01.png	Запасной Жнец душ Ичиго Куросаки проводит дни, сражаясь с пустыми, опасными злыми духами, угрожающими городу Каракура. Ичиго выполняет свои поиски вместе со своими ближайшими союзниками: Орихиме Иноуэ, другом детства, обладающим талантом исцеления; Ясутора Садо, его одноклассник, обладающий сверхчеловеческой силой; и Урю Исида, соперник Ичиго-Квинси.\n\nРутина линчевателя Ичиго нарушается внезапным появлением Асгиаро Эберна, опасного арранкара, который возвещает о возвращении Яхве, древнего короля квинси. Яхве стремится разжечь историческую кровную месть между Жнецом душ и Квинси, и он нацеливается на то, чтобы навсегда стереть как человеческий мир, так и Общество душ.\n\nЯхве начинает двустороннее вторжение как в Общество душ, так и в Уэко Мундо, дом Пустых и Арранкаров. В отместку Ичиго и его друзья должны сражаться вместе со старыми союзниками и врагами, чтобы положить конец кровавой кампании Яхве до того, как сам мир придет к концу.\n\n[Написано MAL Rewrite]	9.0	2022	fall	finished	13	24	Studio Pierrot	41467	2026-04-15 17:57:34.57888
+16	Госпожа Кагуя: В любви как на войне: Ультра романтика	Kaguya-sama: Love is War -Ultra Romantic-	かぐや様は告らせたい-ウルトラロマンティック-	/static/screenshots/16_01.png	/static/screenshots/16_01.png	Элитные члены студенческого совета Академии Сютин продолжают свои повседневные соревновательные выходки. Президент Совета Миюки Сирогане ежедневно сталкивается с вице-президентом Кагуей Синомией, каждый изо всех сил пытается обманом заставить другого признаться в своей романтической любви. Кагуя борется в строгих рамках своей богатой, встревоженной семьи, восставая против своего холодного поведения по умолчанию, и сближается с Широгане и остальными своими друзьями.\n\nТем временем казначей совета Юу Исигами страдает под бременем своей безнадежной влюбленности в Цубамэ Коясу, популярного старшеклассника, который помогает вселить в него новую уверенность. Мико Иино, новый член студенческого совета, становится ближе к нарушителю правил Исигами, стремясь преодолеть свой авторитарный моральный кодекс.\n\nПо мере того, как в Академии Сютиин расцветает любовь, офицеры студенческого совета втягивают своих друзей-посторонних во все более комедийные конфликты.\n\n[Написано MAL Rewrite]	9.0	2022	spring	finished	13	23	A-1 Pictures	43608	2026-04-15 17:57:34.57888
+21	Форма голоса	A Silent Voice	聲の形	/static/screenshots/21_01.png	/static/screenshots/21_01.png	В юности ученик начальной школы Сёя Исида стремился побороть скуку самыми жестокими способами. Когда глухая Сёко Нисимия переходит в свой класс, Сёя и остальные ученики бездумно издеваются над ней ради развлечения. Однако, когда ее мать уведомляет школу, его выделяют и обвиняют во всем, что с ней сделали. После того, как Сёко ушёл из школы, Сёя остался на милость своих одноклассников. Его бессердечно подвергают остракизму в начальной и средней школе, а учителя закрывают на это глаза.\n\nСейчас, на третьем году обучения в старшей школе, Сёя все еще страдает от своих проступков, совершенных в детстве. Искренне сожалея о своих прошлых действиях, он отправляется в путь искупления: снова встретиться с Сёко и загладить свою вину.\n\nКоэ-но Катачи рассказывает трогательную историю о воссоединении Сёи с Сёко и его честных попытках искупить свою вину, в то время как его постоянно преследуют тени его прошлого.\n \n[Написано MAL Rewrite]	8.9	\N	\N	finished	1	2	Kyoto Animation	28851	2026-04-15 17:57:34.57888
+30	Монолог фармацевта	The Apothecary Diaries	薬屋のひとりごと	/static/screenshots/30_01.png	/static/screenshots/30_01.png	Маомао, дочь аптекаря, была вырвана из мирной жизни и продана самым низким эшелонам императорского двора. Теперь всего лишь горничная, Маомао начинает свою новую мирскую жизнь и скрывает свои обширные познания в медицине, чтобы избежать нежелательного внимания.\n\nВскоре после прибытия Маомао у маленьких детей императора необъяснимым образом начинают проявляться серьезные симптомы — как будто наложено проклятие. Любопытный Маомао легко разгадывает загадку и, чтобы остаться в тени, пытается оставить анонимную наводку. К сожалению, смелый и проницательный евнух Джинши видит это насквозь и умудряется выделить ее.\n\nВ знак признания ее таланта Маомао повышают до звания фрейлины любимой наложницы императора Гёкуё. Поскольку Маомао продолжает лечить многочисленные недуги, от которых страдает императорский двор, ее фармацевтический опыт быстро оказывается незаменимым.\n\n[Написано MAL Rewrite]	8.9	2023	fall	finished	24	22	OLM	54492	2026-04-15 17:57:34.57888
+37	Завтрашний Джо 2 сезон	Tomorrow's Joe 2	あしたのジョー２	/static/screenshots/37_01.png	/static/screenshots/37_01.png	Ябуки Джо расстроен и безнадежен после одного трагического события. Пытаясь оставить прошлое позади, Джо покидает спортзал и начинает бродить. В своих путешествиях он встречает таких людей, как Волк Канагуши и Горомаки Гондо, людей, которые непреднамеренно раздувают угасающие угли внутри него, заставляя его положить конец своим странствиям. Его возвращение домой возвращает Джо на путь бокса, но, о чем не знают ни он сам, ни его тренер, теперь он страдает от глубоких проблем, которые не позволяют ему участвовать в боях. В попытке решить эти проблемы из Венесуэлы приглашают Карлоса Риверу, всемирно известного боксера, чтобы помочь Джо выздороветь.	8.8	1980	fall	finished	47	24	Tokyo Movie Shinsha	2921	2026-04-15 17:57:34.57888
+45	Унесённые призраками	Spirited Away	千と千尋の神隠し	/static/screenshots/45_01.png	/static/screenshots/45_01.png	Упрямая, избалованная и наивная 10-летняя Тихиро Огино не очень довольна, когда она и ее родители обнаруживают заброшенный парк развлечений по пути в свой новый дом. Осторожно зайдя внутрь, она понимает, что в этом месте есть нечто большее, чем кажется на первый взгляд, поскольку с наступлением сумерек начинают происходить странные вещи. Призрачные видения и еда, превращающая ее родителей в свиней, — это только начало: Тихиро невольно перешла в мир духов. Теперь, оказавшись в ловушке, она должна набраться смелости, чтобы жить и работать среди духов с помощью загадочного Хаку и множества уникальных персонажей, которых она встречает на своем пути.\n\nЯркий и интригующий, «Сэн то Тихиро но Камикакуси» рассказывает историю путешествия Тихиро по незнакомому миру, когда она пытается спасти своих родителей и вернуться домой.\n\n[Написано MAL Rewrite]	8.8	\N	\N	finished	1	2	Studio Ghibli	199	2026-04-15 17:57:34.57888
+50	Ателье колдовских колпаков	Witch Hat Atelier	とんがり帽子のアトリエ	/static/screenshots/50_01.png	/static/screenshots/50_01.png	Коко, дочь скромной портнихи, всегда была очарована магией и ведьмами, которые ее творили, несмотря на строгие меры предосторожности, которые они принимают, чтобы скрыть свои методы от публики. Однако, когда Коко пользуется прекрасным шансом шпионить за опытной ведьмой Кифри, она понимает, что ее любимая книжка с картинками все это время была замаскированной волшебной книгой! В волнении она немедленно начинает проверять различные заклинания.\n\nКогда заклинание вызывает катастрофу в ее доме, Кифрей вовремя спасает ее и решает обучить ее, понимая, что она - первая найденная им зацепка, которая может помочь ему выследить «Шляпы с полями» - опасную группу еретиков, которые экспериментируют с запрещенной магией, изменяющей тело, и распространяют магические артефакты среди простолюдинов. Но прежде чем Коко и Кифрей смогут противостоять Кифрей, ей придется улучшить свои магические навыки и научиться ладить с другими учениками Кифрея. \n\n[Написано MAL Rewrite]	8.7	2026	spring	airing	13	23	BUG FILMS	51553	2026-04-15 17:57:34.57888
+51	Re:Zero Новая жизнь с нуля в другом мире 4 сезон	Re:ZERO -Starting Life in Another World- Season 4	Re:ゼロから始める異世界生活 4th season	/static/screenshots/51_01.png	/static/screenshots/51_01.png	В смертельной битве у Уотергейтского города Пристелла Субару и его союзники едва одержали победу, но их триумф достался дорогой ценой. Через «Власть Чревоугодия» Рем была помещена в анабиоз, а воспоминания Круш и даже имя Юлиуса были сожраны. В поисках способа спасти их Субару узнает о «мудреце» Шауле — всевидящем существе, которое, как говорят, обладает всеми формами знаний. Его следующим пунктом назначения является Сторожевая башня Плеяд, дом мудреца, самая дальняя башня, стоящая в огромной, неизведанной пустыне, известной как Дюны Авгурии, - место настолько опасное, что даже самый могущественный «Святой Меча», Рейнхард, не смог его завоевать. Впереди ярость природы, неизвестные магические звери и невообразимые опасности. Вместе со своими друзьями Субару отправляется в опасное для жизни путешествие, чтобы вернуть утраченное.\n\n(Источник: Кадокава)	8.9	2026	spring	airing	19	23	White Fox	61316	2026-04-23 15:14:38.877006
+91	Благословение небожителей 2 сезон	Heaven Official's Blessing Season 2	天官賜福 貳	/static/screenshots/91_01.png	/static/screenshots/91_01.png	Хотя большинство богов в небесном царстве избегают иметь дело с забытым богом Се Лянем, Небесный император Цзюнь У относится к нему с благосклонностью. В остальном удача Се Ляня ужасна, и, что усугубляет его проблемы, боги, похоже, подозревают, что недавним спутником Се Ляня был ужасный Король-призрак Хуа Чэн. Несмотря на то, что другие могут подумать о нем, Се Лянь с любовью вспоминает обещание Хуа Чэна: в следующий раз, когда они встретятся, Хуа Чэн появится в своей истинной форме.\n\nЦзюнь Ву сообщает Се Ляну тревожную новость о том, что был замечен сигнал бедствия бога, исходящий из Города-призрака — самого процветающего места в царстве призраков, где единственным законом является сам Хуа Чэн. Поскольку Се Лянь без колебаний вступает на территорию Хуа Чэна, он проникает в город, чтобы найти потерянного бога. Там уже ждет настоящий Хуа Чэн. Он — существо, которого больше всего боятся во всех трех мирах, но перед Се Лянем его высокомерие разрушается. Не раскрывая причины своей щедрости, он не жалеет сил и средств, чтобы облегчить бремя бесконечно неудачного прошлого Се Ляня.\n\n[Написано MAL Rewrite]	8.6	\N	\N	finished	12	24	Red Dog Culture House	50399	2026-04-23 15:14:38.877006
+53	Одинокий рокер!	Bocchi the Rock!	ぼっち・ざ・ろっく！	/static/screenshots/53_01.png	/static/screenshots/53_01.png	Стремясь завести друзей и выступить с группой вживую, одинокая и социально озабоченная Хитори «Бокки» Гото посвящает свое время игре на гитаре. В роковой день Бокки встречает уходящего барабанщика Ниджику Идзичи, который приглашает ее присоединиться к Kessoku Band, когда их гитарист Икуё Кита сбегает перед их первым выступлением. Вскоре после этого Бокки встречает своего последнего товарища по группе — классного басиста Рё Ямаду. \n\nХотя их первое совместное выступление было не на должном уровне, девушки чувствуют себя воодушевленными общей любовью к музыке, и вскоре к ним снова присоединяется Кита. Найдя счастье в выступлениях, Бокки и ее коллеги по группе вложили все силы в то, чтобы совершенствоваться как музыканты, одновременно максимально используя свои мимолетные школьные дни.\n\n[Написано MAL Rewrite]	8.7	2022	fall	finished	12	23	CloverWorks	47917	2026-04-23 15:14:38.877006
+54	Королевство 4 сезон	Kingdom Season 4	キングダム 第4シリーズ	/static/screenshots/54_01.png	/static/screenshots/54_01.png	После завершения крупномасштабной коалиционной кампании весь Китай находится в состоянии экономического восстановления. Победитель битвы, государство Цинь, ничем не отличается. Там политические партии во главе с Ин Чжэном и Бувэй Люем продолжают свой внутренний конфликт. Сыграв роль короля в коалиционной битве, Чжэн пользуется доверием народа, но Люй еще далек от участия в борьбе. Через 18 месяцев он планирует прервать церемонию совершеннолетия Чжэна.\n\nТем временем армия Чжао численностью 20 000 человек двинулась к Цинь. При королевском дворе из-за отсутствия генералов, способных отреагировать на надвигающуюся угрозу, Люй лукаво предлагает Чжэну принять командование на себя. Однако вместо этого волонтером становится Чэн Цзяо, сводный брат Чжэна. Поскольку во время коалиционной битвы они стали доверять друг другу, Чжэн теперь принимает Цзяо в качестве своей замены.\n\nОднако силы Чжао отступают всего через полдня после столкновения с армией Цзяо. Поскольку в тени быстро назревают проблемы, внутренняя борьба Цинь только еще больше усложняется. Есть только два человека, на которых, по мнению Чжэна, он может положиться: Би, генерал, командующий 30 000 человек; и Синь, лидер отряда Фэй Синь.\n\n[Написано MAL Rewrite]	8.7	2022	spring	finished	26	24	Studio Pierrot	50160	2026-04-23 15:14:38.877006
+62	Моб Психо 100 III	Mob Psycho 100 III	モブサイコ100 III	/static/screenshots/62_01.png	/static/screenshots/62_01.png	Сорвав угрожающий миру заговор, Сигэо «Моб» Кагеяма возвращается, чтобы заняться наиболее изнурительными аспектами своей обыденной жизни, начиная с заполнения нервного школьного бланка о карьере. Тем временем он продолжает помогать своему наставнику Аратаке Рейгену и новому сотруднику офиса Кацуе Сэридзаве в раскрытии паранормальных случаев их клиентов. Продолжая выполнять свои обязанности, Моб также работает над обретением большей независимости в своей экстрасенсорной и человеческой жизни, а также пытается лучше интегрироваться с окружающими его людьми.\n\nОднако новые сверхъестественные и обычные испытания проверяют эмоциональную устойчивость Моба и заставляют его противостоять окружающей реальности. Стремясь продолжить путь к зрелости, Моб должен разрешить свои эмоциональные кризисы и переоценить наивность, которую он так долго хранил.\n\n[Написано MAL Rewrite]	8.7	2022	fall	finished	12	23	Bones	50172	2026-04-23 15:14:38.877006
+63	86 Часть 2	86 Eighty-Six Part 2	86―エイティシックス―	/static/screenshots/63_01.png	/static/screenshots/63_01.png	Исчезновение передовой эскадрильи за горизонтом мало что может скрыть интенсивность бесконечной пропаганды Республики Сан-Магнолия. Владилена Милизе продолжает действовать в роли «Первого Хранителя», командира еще одной дегуманизированной эскадрильи 86-й фракции в непрерывной войне против Легиона.\n\nНа Западном фронте Шиней Ноузен и его отряд находятся на карантине на военной базе, контролируемой Федеративной Республикой Гиад, ранее известной как Империя Гиадиан. Недавно созданное правительство предоставляет спасенным Восемьдесят Шести полное гражданство и свободу. Группа, размещенная самим президентом Эрнстом Циммерманом, знакомится с его приемной дочерью и последней императрицей Августой Фредерикой Адель-Адлер.\n\nОднако в спокойствии этого нежного общества Шиней и его команда чувствуют, что их цель — на поле битвы. Вскоре они снова оказываются в центре нападения Легиона в составе эскадрильи Нордлихт Федерации в сопровождении Августы Фредерики. Но, поскольку история повторяется, они понимают, что независимо от стороны, смерть и боль на линии фронта — единственное утешение, которое они знают.\n\n[Написано MAL Rewrite]	8.7	2021	fall	finished	12	23	A-1 Pictures	48569	2026-04-23 15:14:38.877006
+66	Первый слэм-данк	THE FIRST SLAM DUNK	THE FIRST SLAM DUNK	/static/screenshots/66_01.png	/static/screenshots/66_01.png	«Спидстер» и разыгрывающий Сёхоку Рёта Мияги всегда играет умно и молниеносно, бегая кругами вокруг своих противников, симулируя хладнокровие. Рёта родился и вырос на Окинаве, и у него был брат, который был на три года старше. Следуя по стопам своего старшего брата, который с юных лет был известным местным игроком, Рёта тоже пристрастился к баскетболу.\n\nНа втором году обучения в старшей школе Рёта играет за баскетбольную команду средней школы Сёхоку вместе с Сакураги, Рукавой, Акаги и Мицуи, когда они выходят на сцену национального чемпионата между старшими классами. И теперь они находятся на грани того, чтобы бросить вызов действующим чемпионам средней школы Санно Когё.\n\n(Источник: GKIDS, отредактировано)	8.7	\N	\N	finished	1	2	Toei Animation	45649	2026-04-23 15:14:38.877006
+68	Блич: Тысячелетняя кровавая война - Разделение	Bleach: Thousand-Year Blood War - The Separation	BLEACH 千年血戦篇-訣別譚-	/static/screenshots/68_01.png	/static/screenshots/68_01.png	После жестокого внезапного нападения сил короля Квинси Яхве, Жнецы Общества душ зализывают свои раны и оплакивают свои потери. Многие из выживших капитанов Soul Reaper тренируются в бою без банкая — совершенной техники, которой владеют самые свирепые воины.\n\nВ предыдущем нападении Ичиго Куросаки едва удалось помочь отразить грозный гнев Яхве. Однако, чтобы в конечном итоге победить своего благочестивого противника и спасти своих союзников, Ичиго теперь должен пройти суровую подготовку, которая выведет его за пределы его физических, эмоциональных и умственных возможностей.\n\nХотя Яхве уже одерживает верх в этой продолжающейся кровной мести, он также успешно вербует Урю Исиду, близкого друга и соперника Ичиго, в качестве своего преемника. Яхве снова наносит удар по ослабленному Сообществу душ, намереваясь окончательно уничтожить своих давних врагов. Пока Ичиго пытается обрести новую силу, капитаны Жнецов душ борются за выживание и занимают время.\n\n[Написано MAL Rewrite]	8.7	2023	summer	finished	13	24	Studio Pierrot	53998	2026-04-23 15:14:38.877006
+73	Вайолет Эвергарден	Violet Evergarden	ヴァイオレット・エヴァーガーデン	/static/screenshots/73_01.png	/static/screenshots/73_01.png	Великая война наконец подошла к концу после четырех долгих лет конфликта; расколотый надвое, континент Телесис медленно начал снова процветать. В кровопролитии оказалась вовлечена Вайолет Эвергарден, молодая девушка, воспитанная с единственной целью — уничтожать вражеские ряды. Госпитализированная и искалеченная в кровавой стычке на заключительном этапе Войны, у нее остались только слова от человека, который был ей самым дорогим, но она не понимала их смысла.\n\nОправляясь от ран, Вайолет начинает новую жизнь, работая в почтовой службе CH после ссоры со своей новой предполагаемой семьей-опекуном. Там она случайно становится свидетелем работы «куклы автопамяти», которая записывает мысли и чувства людей в слова на бумаге. Вдохновленная этой идеей, Вайолет начинает работать куклой с автопамятью, профессией, которая отправит ее в приключение, которое изменит жизнь ее клиентов и, как мы надеемся, приведет к самопознанию.\n\n[Написано MAL Rewrite]	8.7	2018	winter	finished	13	24	Kyoto Animation	33352	2026-04-23 15:14:38.877006
+78	Великий Учитель Онидзука	Great Teacher Onizuka	グレート・ティーチャー・オニヅカ	/static/screenshots/78_01.png	/static/screenshots/78_01.png	У двадцатидвухлетнего Эйкичи Онидзука — бывшего лидера байкерской банды, завоевателя Сёнана и девственника — есть мечта: стать величайшим школьным учителем во всей Японии. Это не из-за страсти к преподаванию, а потому, что ему нужна любящая жена-подросток, когда он станет старым и седым. Тем не менее, для извращенного, жадного и ленивого преступника Онидзука — это нечто большее, чем кажется на первый взгляд. Поэтому, когда он устраивается на работу классным руководителем классов 3-4 в престижной Академии Священного Леса (несмотря на то, что поставил в тупик заместителя директора), все его таланты подвергаются испытанию, поскольку этот класс пользуется особенной дурной славой.\n\nИз-за своего крайнего презрения ко всем учителям ученики класса используют психологическую войну, чтобы морально сломить любого нового классного руководителя, которого они получают, вынуждая его бросить школу. Однако Онидзука не обычный учитель, и он готов к любым испытаниям на своем пути.\n\nИздевательства, самоубийства и сексуальные домогательства — это лишь некоторые из проблем, с которыми его ученики сталкиваются ежедневно. Разбираясь с корнями их проблем, Онидзука поддерживает их своими непредсказуемыми и нетрадиционными методами, даже если для этого придется спрыгнуть со здания, чтобы спасти ребенка, склонного к суициду. Благодаря его эксцентричному обаянию и веселой натуре, ученики 3-4 классов постепенно осознают, насколько приятной может быть школа, если вы ученики Великого Учителя Онизуки.\n\n[Написано MAL Rewrite]	8.7	1999	summer	finished	43	25	Studio Pierrot	245	2026-04-23 15:14:38.877006
+87	Мастер Муси	Mushi-Shi	蟲師	/static/screenshots/87_01.png	/static/screenshots/87_01.png	«Муши»: самые основные формы жизни в мире. Они существуют без каких-либо целей или задач, кроме простого «существования». Они вне оков слов «добро» и «зло». Муси могут существовать в бесчисленных формах и способны имитировать вещи из мира природы, такие как растения, болезни и даже такие явления, как радуга.\n\nОднако это всего лишь расплывчатое определение этих сущностей, населяющих яркий мир Мусиси, и даже называть их формой жизни было бы чрезмерным упрощением. Подробной информации о Муси мало, поскольку большинство людей не подозревают об их существовании.\n\nТак что же такое Муси и почему они существуют? Это вопрос, над которым постоянно размышляет «Мушиси» Гинко. Мусиши — это те, кто исследуют Муси в надежде понять их место в мировой иерархии жизни.\n\nГинко преследует слухи о событиях, которые могут быть связаны с Муси, и все ради того, чтобы найти ответ.\n\nВ конце концов, это может привести к смыслу самой жизни.\n\n[Написано MAL Rewrite]	8.7	2005	fall	finished	26	23	Artland	457	2026-04-23 15:14:38.877006
+86	Девушки-пони: Славное дерби. Начало новой эры	Umamusume: Pretty Derby - Beginning of a New Era	ウマ娘 プリティーダービー 新時代の扉	/static/screenshots/86_01.png	/static/screenshots/86_01.png	Участие в скачках высочайшего уровня, серии Twinkle Series, — мечта многих девушек-лошадей. Хотя раньше она принимала участие только в скачках вольным стилем, девушка-лошадь Джангл Карман обнаруживает в себе то же стремление после того, как стала свидетельницей потрясающей победы Фудзи Кисеки на большой сцене. Обладая непоколебимой уверенностью в себе, Jungle Pocket способна быстро одержать несколько побед, что позволяет ей участвовать в гонках более высокого уровня.\n\nКогда Jungle Pocket принимает участие в своей первой гонке G1 вместе с другой начинающей гонщицей — очень умной и эксцентричной Агнес Тахион, — она осознает огромный разрыв в их способностях. Однако это только мотивирует Jungle Pocket еще больше, поскольку она решает отомстить Тахиону, выиграв в следующем году почетный титул Triple Crown Classic. Хотя мир скачек никогда не бывает предсказуемым и простым, Jungle Pocket полна решимости победить Тахиона и возвестить начало новой эры.\n\n[Написано MAL Rewrite]	8.7	\N	\N	finished	1	1	CygamesPictures	57647	2026-04-23 15:14:38.877006
+93	Судьба: Ночь схватки. Прикосновение небес 3	Fate/stay night: Heaven's Feel - III. Spring Song	劇場版「Fate/stay night [Heaven's Feel] III.spring song」	/static/screenshots/93_01.png	/static/screenshots/93_01.png	Пятая Война Святого Грааля в городе Фуюки достигла поворотного момента, когда жизни всех участников находятся под угрозой, поскольку скрытый враг наконец обнаруживает себя. Когда Широ Эмия, Рин Тоосака и Ильясвиль фон Айнцберн обнаруживают истинную, развращающую природу тени, бушующей по всему городу, они понимают, насколько ужасна ситуация. Чтобы защитить своих близких, группа должна противостоять, казалось бы, непреодолимой силе врага, даже если некоторые из этих врагов когда-то были их союзниками или, возможно, кем-то более близким.\n\nКогда начинается заключительный акт этой хаотичной войны, идеалы, по мнению Широ, вскоре будут поставлены под сомнение мучительной дилеммой: действительно ли возможно спасти мир, в котором, кажется, все пошло не так?\n\n[Написано MAL Rewrite]	8.6	\N	\N	finished	1	2	ufotable	33050	2026-04-23 15:14:38.877006
+97	Легенда о Хэй 2	The Legend of Hei 2	罗小黑战记2	/static/screenshots/97_01.png	/static/screenshots/97_01.png	Когда нападение разрушает хрупкий мир между духовным миром и человечеством, Хэй объединяется с Луе, последним учеником его Шифу Усяня, чтобы раскрыть заговор, который угрожает обоим мирам — и связи, которую они поклялись защищать.\n\n(Источник: Театры AMC)	8.6	\N	\N	finished	1	1	HMCH	61952	2026-04-23 15:14:38.877006
+100	Сделано в Бездне	Made in Abyss	メイドインアビス	/static/screenshots/100_01.png	/static/screenshots/100_01.png	Бездна — зияющая пропасть, уходящая в глубины земли, наполненная загадочными существами и реликвиями из далекого прошлого. Как это произошло? Что лежит внизу? Бесчисленное множество отважных людей, известных как Дайверы, пытались разгадать тайны Бездны, бесстрашно спускаясь в ее самые темные миры. Лучших и храбрейших из ныряльщиков, Белых Свистков, те, кто остается на поверхности, провозглашают легендами.\n\nРико, дочь пропавшей Белого Свистка Лизы Уничтожительницы, стремится стать похожей на свою мать и исследовать самые дальние уголки Бездны. Однако, поскольку она сама является новичком в Красном Свистке, ей разрешено бродить только по самому верхнему уровню. Несмотря на это, Рико случайно сталкивается с загадочным роботом, внешне похожим на обычного мальчика. Она приходит, чтобы назвать его Регом, и он не помнит событий, предшествовавших его открытию. Уверенные, что технология создания Рега должна прийти из глубины Бездны, они решают отправиться в пропасть, чтобы восстановить его воспоминания и увидеть дно великой ямы собственными глазами. Однако они не знают о суровой реальности истинного существования Бездны.\n\n[Написано MAL Rewrite]	8.6	2017	summer	finished	13	25	Kinema Citrus	34599	2026-04-23 15:14:38.877006
+\.
+
+
+--
+-- TOC entry 5002 (class 0 OID 18998)
+-- Dependencies: 220
+-- Data for Name: anime_genres; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.anime_genres (anime_id, genre_id) FROM stdin;
+5	8
+5	24
+5	41
+6	1
+6	8
+6	41
+8	1
+8	4
+8	8
+8	24
+11	1
+11	4
+11	24
+15	1
+15	2
+15	37
+16	4
+16	22
+18	2
+18	8
+18	10
+19	8
+19	22
+26	8
+26	7
+26	41
+30	8
+30	7
+50	10
+1	2
+1	46
+1	8
+1	10
+2	1
+2	2
+2	7
+2	37
+3	1
+3	2
+3	8
+3	10
+22	46
+22	8
+22	24
+23	8
+23	7
+33	46
+33	8
+34	1
+34	2
+34	8
+35	46
+35	8
+37	8
+37	30
+38	8
+41	1
+41	7
+41	37
+42	1
+42	2
+42	8
+45	2
+45	46
+45	10
+47	8
+47	24
+\.
+
+
+--
+-- TOC entry 5004 (class 0 OID 19004)
+-- Dependencies: 222
+-- Data for Name: anime_tags; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.anime_tags (anime_id, tag_id) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5005 (class 0 OID 19009)
+-- Dependencies: 223
+-- Data for Name: genres; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.genres (id, name, slug) FROM stdin;
+1	Action	action
+2	Adventure	adventure
+5	Avant Garde	avant_garde
+46	Award Winning	award_winning
+28	Boys Love	boys_love
+4	Comedy	comedy
+8	Drama	drama
+10	Fantasy	fantasy
+26	Girls Love	girls_love
+47	Gourmet	gourmet
+14	Horror	horror
+7	Mystery	mystery
+22	Romance	romance
+24	Sci-Fi	scifi
+36	Slice of Life	slice_of_life
+30	Sports	sports
+37	Supernatural	supernatural
+41	Suspense	suspense
+9	Ecchi	ecchi
+49	Erotica	erotica
+12	Hentai	hentai
+50	Adult Cast	adult_cast
+51	Anthropomorphic	anthropomorphic
+52	CGDCT	cgdct
+53	Childcare	childcare
+54	Combat Sports	combat_sports
+81	Crossdressing	crossdressing
+55	Delinquents	delinquents
+39	Detective	detective
+56	Educational	educational
+57	Gag Humor	gag_humor
+58	Gore	gore
+35	Harem	harem
+59	High Stakes Game	high_stakes_game
+13	Historical	historical
+60	Idols (Female)	idols_female
+61	Idols (Male)	idols_male
+62	Isekai	isekai
+63	Iyashikei	iyashikei
+64	Love Polygon	love_polygon
+65	Magical Sex Shift	magical_sex_shift
+66	Mahou Shoujo	mahou_shoujo
+17	Martial Arts	martial_arts
+18	Mecha	mecha
+67	Medical	medical
+38	Military	military
+19	Music	music
+6	Mythology	mythology
+68	Organized Crime	organized_crime
+69	Otaku Culture	otaku_culture
+20	Parody	parody
+70	Performing Arts	performing_arts
+71	Pets	pets
+40	Psychological	psychological
+3	Racing	racing
+72	Reincarnation	reincarnation
+73	Reverse Harem	reverse_harem
+74	Love Status Quo	love_status_quo
+21	Samurai	samurai
+23	School	school
+75	Showbiz	showbiz
+29	Space	space
+11	Strategy Game	strategy_game
+31	Super Power	super_power
+76	Survival	survival
+77	Team Sports	team_sports
+78	Time Travel	time_travel
+32	Vampire	vampire
+79	Video Game	video_game
+80	Visual Arts	visual_arts
+48	Workplace	workplace
+82	Urban Fantasy	urban_fantasy
+83	Villainess	villainess
+43	Josei	josei
+15	Kids	kids
+42	Seinen	seinen
+25	Shoujo	shoujo
+27	Shounen	shounen
+\.
+
+
+--
+-- TOC entry 5007 (class 0 OID 19016)
+-- Dependencies: 225
+-- Data for Name: reviews; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.reviews (id, anime_id, author_name, title, content, score, external_id, created_at) FROM stdin;
+1	1	user789	Шедевр нового поколения	Frieren — это не просто аниме о приключениях, это глубокое философское размышление о времени, памяти и ценности человеческих связей. Анимация Madhouse великолепна, а музыка создаёт невероятную атмосферу. Обязательно к просмотру!	10	\N	2024-03-15 10:30:00
+2	1	newuser456	Лучшее фэнтези года	Наконец-то аниме, где герои ведут себя как взрослые люди. История о том, как эльфийка осознаёт, что жизнь смертных коротка, но ценна. Очень трогательно.	9	\N	2024-03-20 14:20:00
+3	1	freshuser999	Не спешите, это шедевр	Медленное повествование может отпугнуть, но оно того стоит. Каждая серия — как маленькая притча. Старк и Ферн — прекрасные спутники.	10	\N	2024-04-01 09:15:00
+4	3	user789	Лучшее аниме всех времён	Brotherhood — это эталон сёнэна. Продуманный сюжет, харизматичные персонажи, отсутствие провисаний. История братьев Элриков никого не оставит равнодушным.	10	\N	2023-12-10 18:00:00
+5	3	duplicate	Идеальный финал	В отличие от первой адаптации, Brotherhood следует манге и имеет логичную и эпичную концовку. Актёры озвучки, саундтрек — всё на высоте.	10	\N	2024-01-05 20:30:00
+6	5	updated_user	Лучшая научная фантастика	Первые 12 серий могут показаться медленными, но когда сюжет начинает раскручиваться — вы не сможете оторваться. Окурин и Курису — одна из лучших пар в аниме.	10	\N	2024-02-14 15:45:00
+7	5	fulltest_updated	Плакал на последних сериях	El Psy Kongroo. Это аниме заставило меня поверить в то, что путешествия во времени возможны. Эмоциональные американские горки.	10	\N	2024-03-25 12:00:00
+8	6	newuser456	Пик аниме-индустрии	Эпизоды "Герой" и "Полуночный солдат" — одни из лучших в истории аниме. Раскрытие тайн подвала стоит ожидания.	10	\N	2019-07-10 22:00:00
+9	9	freshuser999	Магия Тогаши	Арка "Муравьи-химеры" — это произведение искусства. 148 серий пролетают незаметно. Жаль, что мы никогда не увидим продолжение.	10	\N	2023-11-20 16:30:00
+10	34	user789	Философия войны и мира	Сезон кардинально отличается от первого: меньше экшена, больше драмы и развития персонажа. Торфинн ищет себя, и это прекрасно.	9	\N	2023-06-15 14:00:00
+11	35	duplicate	Визуальный шедевр	Ради одной анимации стоит посмотреть. История о связи двух сердец трогает до глубины души. Радиусан.	10	\N	2017-04-05 11:00:00
+12	18	fulltest_updated	Достойное продолжение	Второй сезон не уступает первому. Всё та же глубокая философия и красивая анимация.	9	\N	2026-04-10 16:20:00
+13	30	updated_user	Лучшая детективная драма	Маомао — одна из лучших героинь последних лет. Интригующий сюжет и отличная атмосфера императорского двора.	9	\N	2024-05-01 13:00:00
+\.
+
+
+--
+-- TOC entry 5009 (class 0 OID 19027)
+-- Dependencies: 227
+-- Data for Name: screenshots; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.screenshots (id, anime_id, url) FROM stdin;
+1	100	/static/screenshots/100_01.png
+2	10	/static/screenshots/10_01.png
+3	11	/static/screenshots/11_01.png
+4	12	/static/screenshots/12_01.png
+5	13	/static/screenshots/13_01.png
+6	14	/static/screenshots/14_01.png
+7	15	/static/screenshots/15_01.png
+8	15	/static/screenshots/15_02.png
+9	16	/static/screenshots/16_01.png
+10	17	/static/screenshots/17_01.png
+11	18	/static/screenshots/18_01.png
+12	18	/static/screenshots/18_02.png
+13	18	/static/screenshots/18_03.png
+14	18	/static/screenshots/18_04.png
+15	19	/static/screenshots/19_01.png
+16	1	/static/screenshots/1_01.png
+17	1	/static/screenshots/1_02.png
+18	1	/static/screenshots/1_03.png
+19	1	/static/screenshots/1_04.png
+20	20	/static/screenshots/20_01.png
+21	21	/static/screenshots/21_01.png
+22	22	/static/screenshots/22_01.png
+23	23	/static/screenshots/23_01.png
+24	23	/static/screenshots/23_02.png
+25	23	/static/screenshots/23_03.png
+26	24	/static/screenshots/24_01.png
+27	25	/static/screenshots/25_01.png
+28	26	/static/screenshots/26_01.png
+29	27	/static/screenshots/27_01.png
+30	28	/static/screenshots/28_01.png
+31	29	/static/screenshots/29_01.png
+32	2	/static/screenshots/2_01.png
+33	30	/static/screenshots/30_01.png
+34	30	/static/screenshots/30_02.png
+35	30	/static/screenshots/30_03.png
+36	31	/static/screenshots/31_01.png
+37	32	/static/screenshots/32_01.png
+38	33	/static/screenshots/33_01.png
+39	34	/static/screenshots/34_01.png
+40	35	/static/screenshots/35_01.png
+41	36	/static/screenshots/36_01.png
+42	37	/static/screenshots/37_01.png
+43	38	/static/screenshots/38_01.png
+44	39	/static/screenshots/39_01.png
+45	3	/static/screenshots/3_01.png
+46	3	/static/screenshots/3_02.png
+47	3	/static/screenshots/3_03.png
+48	40	/static/screenshots/40_01.png
+49	41	/static/screenshots/41_01.png
+50	42	/static/screenshots/42_01.png
+51	43	/static/screenshots/43_01.png
+52	44	/static/screenshots/44_01.png
+53	44	/static/screenshots/44_02.png
+54	44	/static/screenshots/44_03.png
+55	45	/static/screenshots/45_01.png
+56	46	/static/screenshots/46_01.png
+57	47	/static/screenshots/47_01.png
+58	48	/static/screenshots/48_01.png
+59	49	/static/screenshots/49_01.png
+60	4	/static/screenshots/4_01.png
+61	4	/static/screenshots/4_02.png
+62	4	/static/screenshots/4_03.png
+63	4	/static/screenshots/4_04.png
+64	50	/static/screenshots/50_01.png
+65	51	/static/screenshots/51_01.png
+66	51	/static/screenshots/51_02.png
+67	52	/static/screenshots/52_01.png
+68	53	/static/screenshots/53_01.png
+69	54	/static/screenshots/54_01.png
+70	55	/static/screenshots/55_01.png
+71	56	/static/screenshots/56_01.png
+72	57	/static/screenshots/57_01.png
+73	57	/static/screenshots/57_02.png
+74	58	/static/screenshots/58_01.png
+75	59	/static/screenshots/59_01.png
+76	5	/static/screenshots/5_01.png
+77	60	/static/screenshots/60_01.png
+78	61	/static/screenshots/61_01.png
+79	62	/static/screenshots/62_01.png
+80	63	/static/screenshots/63_01.png
+81	64	/static/screenshots/64_01.png
+82	65	/static/screenshots/65_01.png
+83	66	/static/screenshots/66_01.png
+84	67	/static/screenshots/67_01.png
+85	68	/static/screenshots/68_01.png
+86	69	/static/screenshots/69_01.png
+87	6	/static/screenshots/6_01.png
+88	70	/static/screenshots/70_01.png
+89	71	/static/screenshots/71_01.png
+90	72	/static/screenshots/72_01.png
+91	73	/static/screenshots/73_01.png
+92	74	/static/screenshots/74_01.png
+93	75	/static/screenshots/75_01.png
+94	76	/static/screenshots/76_01.png
+95	77	/static/screenshots/77_01.png
+96	78	/static/screenshots/78_01.png
+97	79	/static/screenshots/79_01.png
+98	7	/static/screenshots/7_01.png
+99	80	/static/screenshots/80_01.png
+100	81	/static/screenshots/81_01.png
+101	82	/static/screenshots/82_01.png
+102	83	/static/screenshots/83_01.png
+103	84	/static/screenshots/84_01.png
+104	85	/static/screenshots/85_01.png
+105	86	/static/screenshots/86_01.png
+106	87	/static/screenshots/87_01.png
+107	88	/static/screenshots/88_01.png
+108	89	/static/screenshots/89_01.png
+109	8	/static/screenshots/8_01.png
+110	90	/static/screenshots/90_01.png
+111	91	/static/screenshots/91_01.png
+112	92	/static/screenshots/92_01.png
+113	93	/static/screenshots/93_01.png
+114	94	/static/screenshots/94_01.png
+115	95	/static/screenshots/95_01.png
+116	96	/static/screenshots/96_01.png
+117	97	/static/screenshots/97_01.png
+118	98	/static/screenshots/98_01.png
+119	99	/static/screenshots/99_01.png
+120	9	/static/screenshots/9_01.png
+121	9	/static/screenshots/9_02.png
+\.
+
+
+--
+-- TOC entry 5011 (class 0 OID 19035)
+-- Dependencies: 229
+-- Data for Name: tags; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.tags (id, name, slug) FROM stdin;
+1	Historical	historical
+2	Racing	racing
+3	Military	military
+4	Psychological	psychological
+5	Time Travel	time_travel
+6	Gore	gore
+7	Survival	survival
+8	Gag Humor	gag_humor
+9	Parody	parody
+10	Samurai	samurai
+11	School	school
+12	Mecha	mecha
+13	Super Power	super_power
+14	Medical	medical
+15	Adult Cast	adult_cast
+\.
+
+
+--
+-- TOC entry 5013 (class 0 OID 19042)
+-- Dependencies: 231
+-- Data for Name: user_anime; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.user_anime (id, user_id, anime_id, status, score, episodes_watched, is_favorite, created_at, updated_at) FROM stdin;
+3	6	1	watching	\N	0	f	2026-04-15 18:43:05.113371	2026-04-15 18:43:05.113371
+5	6	2	planned	8	0	f	2026-04-16 18:11:44.803971	2026-04-16 18:11:44.803971
+\.
+
+
+--
+-- TOC entry 5015 (class 0 OID 19051)
+-- Dependencies: 233
+-- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.users (id, email, username, password_hash, avatar, created_at) FROM stdin;
+1	user789@example.com	user789	$2b$12$qNguypYneENwF3aO/s8ffuHXLpf9uSbLAMyQ4Iuy4pnOr4.MYXHr2	\N	2026-04-14 13:32:58.377538
+2	newuser456@test.com	newuser456	$2b$12$qGXYc9pFBYgv4HwqninL0O9f5I6/1uHVgbqBz7qTuqBehyFgWpP.m	\N	2026-04-14 13:33:13.978459
+3	duplicate@test.com	duplicate	$2b$12$pZjz1lokID76opUcqox3SODyH.zbvcOgkPQq9YbajtYRI25N842u2	\N	2026-04-14 13:33:50.909429
+4	freshuser999@test.com	freshuser999	$2b$12$WZ0H4nhLFPRaFzNPqaGzWu0ncfsWy7mlSyvhenR9sXEvgBoGY4KsC	\N	2026-04-14 13:35:52.192276
+5	test123@example.com	updated_user	$2b$12$FrA4YqfyF41iTd6BMu7usOge3Uccm1J.CuWHGrZOaY5JzosjpKC8a	\N	2026-04-15 18:40:00.958011
+6	fulltest@example.com	fulltest_updated	$2b$12$l.Agk.YiYtc4XVFBPGVLUOtwvbWUDAt7EQc47CHmXVTqr9nvNFDqK	\N	2026-04-15 18:43:03.634982
+7	testauth@example.com	updated	$2b$12$5ZrvcbCKpw1JPgGy7dOc/uN9MpXxbZHGFLNHFhSnMtFFBwK6HkSia	\N	2026-04-15 19:36:28.242055
+\.
+
+
+--
+-- TOC entry 5030 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: anime_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.anime_id_seq', 111, true);
+
+
+--
+-- TOC entry 5031 (class 0 OID 0)
+-- Dependencies: 224
+-- Name: genres_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.genres_id_seq', 1, false);
+
+
+--
+-- TOC entry 5032 (class 0 OID 0)
+-- Dependencies: 226
+-- Name: reviews_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.reviews_id_seq', 13, true);
+
+
+--
+-- TOC entry 5033 (class 0 OID 0)
+-- Dependencies: 228
+-- Name: screenshots_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.screenshots_id_seq', 121, true);
+
+
+--
+-- TOC entry 5034 (class 0 OID 0)
+-- Dependencies: 230
+-- Name: tags_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.tags_id_seq', 15, true);
+
+
+--
+-- TOC entry 5035 (class 0 OID 0)
+-- Dependencies: 232
+-- Name: user_anime_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.user_anime_id_seq', 5, true);
+
+
+--
+-- TOC entry 5036 (class 0 OID 0)
+-- Dependencies: 234
+-- Name: users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.users_id_seq', 7, true);
+
+
+--
+-- TOC entry 4808 (class 2606 OID 19070)
+-- Name: anime anime_external_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime
+    ADD CONSTRAINT anime_external_id_key UNIQUE (external_id);
+
+
+--
+-- TOC entry 4814 (class 2606 OID 19072)
+-- Name: anime_genres anime_genres_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime_genres
+    ADD CONSTRAINT anime_genres_pkey PRIMARY KEY (anime_id, genre_id);
+
+
+--
+-- TOC entry 4810 (class 2606 OID 19074)
+-- Name: anime anime_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime
+    ADD CONSTRAINT anime_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4816 (class 2606 OID 19076)
+-- Name: anime_tags anime_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime_tags
+    ADD CONSTRAINT anime_tags_pkey PRIMARY KEY (anime_id, tag_id);
+
+
+--
+-- TOC entry 4818 (class 2606 OID 19078)
+-- Name: genres genres_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.genres
+    ADD CONSTRAINT genres_name_key UNIQUE (name);
+
+
+--
+-- TOC entry 4820 (class 2606 OID 19080)
+-- Name: genres genres_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.genres
+    ADD CONSTRAINT genres_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4822 (class 2606 OID 19082)
+-- Name: genres genres_slug_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.genres
+    ADD CONSTRAINT genres_slug_key UNIQUE (slug);
+
+
+--
+-- TOC entry 4824 (class 2606 OID 19084)
+-- Name: reviews reviews_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4826 (class 2606 OID 19086)
+-- Name: screenshots screenshots_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.screenshots
+    ADD CONSTRAINT screenshots_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4828 (class 2606 OID 19088)
+-- Name: tags tags_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_name_key UNIQUE (name);
+
+
+--
+-- TOC entry 4830 (class 2606 OID 19090)
+-- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4832 (class 2606 OID 19092)
+-- Name: tags tags_slug_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tags
+    ADD CONSTRAINT tags_slug_key UNIQUE (slug);
+
+
+--
+-- TOC entry 4837 (class 2606 OID 19094)
+-- Name: user_anime user_anime_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_anime
+    ADD CONSTRAINT user_anime_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4839 (class 2606 OID 19096)
+-- Name: user_anime user_anime_user_id_anime_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_anime
+    ADD CONSTRAINT user_anime_user_id_anime_id_key UNIQUE (user_id, anime_id);
+
+
+--
+-- TOC entry 4841 (class 2606 OID 19098)
+-- Name: users users_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 4843 (class 2606 OID 19100)
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 4845 (class 2606 OID 19102)
+-- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- TOC entry 4811 (class 1259 OID 19103)
+-- Name: idx_anime_rating; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_anime_rating ON public.anime USING btree (rating);
+
+
+--
+-- TOC entry 4812 (class 1259 OID 19104)
+-- Name: idx_anime_year; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_anime_year ON public.anime USING btree (year);
+
+
+--
+-- TOC entry 4833 (class 1259 OID 19105)
+-- Name: idx_user_anime_anime_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_anime_anime_id ON public.user_anime USING btree (anime_id);
+
+
+--
+-- TOC entry 4834 (class 1259 OID 19106)
+-- Name: idx_user_anime_status; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_anime_status ON public.user_anime USING btree (status);
+
+
+--
+-- TOC entry 4835 (class 1259 OID 19107)
+-- Name: idx_user_anime_user_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_user_anime_user_id ON public.user_anime USING btree (user_id);
+
+
+--
+-- TOC entry 4846 (class 2606 OID 19108)
+-- Name: anime_genres anime_genres_anime_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime_genres
+    ADD CONSTRAINT anime_genres_anime_id_fkey FOREIGN KEY (anime_id) REFERENCES public.anime(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4847 (class 2606 OID 19113)
+-- Name: anime_genres anime_genres_genre_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime_genres
+    ADD CONSTRAINT anime_genres_genre_id_fkey FOREIGN KEY (genre_id) REFERENCES public.genres(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4848 (class 2606 OID 19118)
+-- Name: anime_tags anime_tags_anime_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime_tags
+    ADD CONSTRAINT anime_tags_anime_id_fkey FOREIGN KEY (anime_id) REFERENCES public.anime(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4849 (class 2606 OID 19123)
+-- Name: anime_tags anime_tags_tag_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.anime_tags
+    ADD CONSTRAINT anime_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4850 (class 2606 OID 19128)
+-- Name: reviews reviews_anime_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.reviews
+    ADD CONSTRAINT reviews_anime_id_fkey FOREIGN KEY (anime_id) REFERENCES public.anime(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4851 (class 2606 OID 19133)
+-- Name: screenshots screenshots_anime_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.screenshots
+    ADD CONSTRAINT screenshots_anime_id_fkey FOREIGN KEY (anime_id) REFERENCES public.anime(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4852 (class 2606 OID 19138)
+-- Name: user_anime user_anime_anime_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_anime
+    ADD CONSTRAINT user_anime_anime_id_fkey FOREIGN KEY (anime_id) REFERENCES public.anime(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 4853 (class 2606 OID 19143)
+-- Name: user_anime user_anime_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.user_anime
+    ADD CONSTRAINT user_anime_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE CASCADE;
+
+
+-- Completed on 2026-04-23 17:34:04
 
 --
 -- PostgreSQL database dump complete
 --
+
+\unrestrict 2UfP8T6RHjGe5A5WdlXMOr6uB1moeT9ovdj5a25ewaF8RTqyhmxhmX2VIVtaKau
+
